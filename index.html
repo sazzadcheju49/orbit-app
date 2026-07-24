@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Orbit</title>
-  
+  <link rel="manifest" href="manifest.json">
   <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4322,10 +4322,42 @@ const PWAEngine = {
   deferredPrompt: null,
 
   init() {
-    this.injectManifest();
     this.registerServiceWorker();
     this.bindInstallPrompt();
   },
+
+  registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Orbit Service Worker registered successfully'))
+        .catch(err => console.log('Service worker registration:', err));
+    }
+  },
+
+  bindInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.style.display = 'flex';
+    });
+  },
+
+  async installPWA() {
+    if (!this.deferredPrompt) return;
+    this.deferredPrompt.prompt();
+    const { outcome } = await this.deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.style.display = 'none';
+    }
+    this.deferredPrompt = null;
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  PWAEngine.init();
+});
 
   injectManifest() {
     const manifestData = {
