@@ -4314,7 +4314,7 @@ document.addEventListener('DOMContentLoaded', () => {
   BackupEngine.init();
 });
 
-    // === JS-12: Service Worker & PWA Handler ===
+// === JS-12: Service Worker & PWA Handler ===
 /* ==========================================
    PWA MANIFEST & SERVICE WORKER ENGINE
    ========================================== */
@@ -4355,97 +4355,10 @@ const PWAEngine = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  PWAEngine.init();
-});
-
-  injectManifest() {
-    const manifestData = {
-      name: "Orbit",
-      short_name: "Orbit",
-      description: "Your private social feed. Structured knowledge base. Encrypted vault.",
-      start_url: "./",
-      display: "standalone",
-      background_color: "#0d0d0f",
-      theme_color: "#0d0d0f",
-      orientation: "portrait",
-      icons: [
-        {
-          src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%230d0d0f'><rect width='512' height='512' rx='100' fill='%230d0d0f'/><circle cx='256' cy='256' r='120' stroke='%23a78bfa' stroke-width='32' fill='none'/><circle cx='256' cy='256' r='40' fill='%23a78bfa'/></svg>",
-          sizes: "512x512",
-          type: "image/svg+xml",
-          purpose: "any maskable"
-        }
-      ]
-    };
-
-    const stringManifest = JSON.stringify(manifestData);
-    const blob = new Blob([stringManifest], { type: 'application/json' });
-    const manifestUrl = URL.createObjectURL(blob);
-
-    let link = document.querySelector('link[rel="manifest"]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'manifest';
-      document.head.appendChild(link);
-    }
-    link.href = manifestUrl;
-  },
-
-  registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-      const swCode = `
-        const CACHE_NAME = 'orbit-pwa-v2';
-        self.addEventListener('install', (e) => {
-          self.skipWaiting();
-        });
-        self.addEventListener('activate', (e) => {
-          e.waitUntil(clients.claim());
-        });
-        self.addEventListener('fetch', (e) => {
-          e.respondWith(
-            caches.match(e.request).then((res) => {
-              return res || fetch(e.request).catch(() => caches.match('./'));
-            })
-          );
-        });
-      `;
-
-      const blob = new Blob([swCode], { type: 'application/javascript' });
-      const swUrl = URL.createObjectURL(blob);
-
-      navigator.serviceWorker.register(swUrl)
-        .then(() => console.log('Orbit Service Worker registered'))
-        .catch(err => console.log('Service Worker setup note:', err));
-    }
-  },
-
-  bindInstallPrompt() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-      const banner = document.getElementById('pwa-install-banner');
-      if (banner) banner.style.display = 'flex';
-    });
-  },
-
-  async installPWA() {
-    if (!this.deferredPrompt) return;
-    this.deferredPrompt.prompt();
-    const { outcome } = await this.deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      const banner = document.getElementById('pwa-install-banner');
-      if (banner) banner.style.display = 'none';
-    }
-    this.deferredPrompt = null;
-  }
-};
-
 // Initialize PWA Engine
 document.addEventListener('DOMContentLoaded', () => {
   PWAEngine.init();
 });
-
     // === JS-13: Layer 2 Blocks & Templates Engine ===
 /* ==========================================
    LAYER 2 BLOCKS & LAYER 3 TEMPLATES ENGINE
