@@ -1,0 +1,4665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Orbit</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* === CSS-1: Design System, Tokens, Global Reset & App Shell === */
+/* ==========================================
+   DESIGN SYSTEM TOKENS & BASE SHELL
+   ========================================== */
+:root {
+  --bg: #0d0d0f;
+  --surface: #161618;
+  --surface-2: #1e1e22;
+  --border: #2a2a2e;
+  --text-primary: #f0f0f5;
+  --text-secondary: #7b7b8f;
+  --accent: #a78bfa;
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  
+  /* Icon Palette */
+  --icon-slate: #8b8fa8;
+  --icon-violet: #a78bfa;
+  --icon-blue: #7ba7d4;
+  --icon-teal: #6bbcbc;
+  --icon-green: #7bba8b;
+  --icon-amber: #c4a05a;
+  --icon-rose: #d48b9a;
+  --icon-mauve: #b48bd4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow: hidden;
+  position: fixed;
+}
+
+/* App Container */
+#app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg);
+}
+
+/* Screen Manager & Slide Transitions */
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg);
+  z-index: 1;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.screen.active {
+  transform: translateX(0%);
+  z-index: 2;
+}
+
+.screen.exit-left {
+  transform: translateX(-25%);
+  z-index: 1;
+}
+
+.screen.enter-right {
+  transform: translateX(100%);
+  z-index: 3;
+}
+
+/* Header / Top Bar */
+.top-bar {
+  height: 56px;
+  min-height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg);
+  z-index: 10;
+}
+
+.top-bar-left, .top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-bar-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.icon-btn:active {
+  background-color: var(--surface-2);
+}
+
+/* Screen Scrollable Body */
+.screen-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Base Cards & Buttons Utility */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.placeholder-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 240px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-card);
+  color: var(--text-secondary);
+  gap: 12px;
+  padding: 24px;
+}
+
+.placeholder-box p {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+    /* === CSS-2: Storage UI / Loading Indicators === */
+/* ==========================================
+   STORAGE UI & TOAST NOTIFICATION SYSTEM
+   ========================================== */
+
+/* Toast Container */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: calc(100% - 32px);
+  max-width: 400px;
+}
+
+.toast {
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Database Loader Overlay */
+.db-loader-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(13, 13, 15, 0.88);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.db-loader-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+    /* === CSS-3: Formatting Toolbar & Floating Menus === */
+/* ==========================================
+   FLOATING RICH TEXT FORMATTING TOOLBAR
+   ========================================== */
+.format-toolbar {
+  position: fixed;
+  z-index: 9000;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px) scale(0.96);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.format-toolbar.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.format-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.format-btn:active, .format-btn.active {
+  background-color: var(--border);
+  color: var(--accent);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border);
+  margin: 0 4px;
+}
+
+/* Color Palette Sub-Panels */
+.color-picker-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 190px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 9001;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.color-swatch:active {
+  transform: scale(1.15);
+}
+
+.color-swatch.clear-swatch {
+  background: transparent;
+  position: relative;
+}
+
+.color-swatch.clear-swatch::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 2px;
+  background-color: #f43f5e;
+  transform: rotate(-45deg);
+}
+
+/* Editable Block Class */
+[contenteditable="true"] {
+  outline: none;
+  min-height: 24px;
+  word-break: break-word;
+}
+
+[contenteditable="true"]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-secondary);
+  pointer-events: none;
+  display: block;
+}
+
+    /* === CSS-4: Pages Grid, Action Sheets & Icon Picker === */
+/* ==========================================
+   PAGES SECTION, GRID & BOTTOM SHEETS
+   ========================================== */
+
+/* 2-Column Grid */
+.pages-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding-bottom: 24px;
+}
+
+.page-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  user-select: none;
+}
+
+.page-card:active {
+  transform: scale(0.97);
+  background-color: var(--surface-2);
+}
+
+.page-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vault-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: rgba(212, 139, 154, 0.15);
+  border: 1px solid rgba(212, 139, 154, 0.3);
+  color: var(--icon-rose);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Bottom Sheets */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 9500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.sheet-backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--surface);
+  border-top: 1px solid var(--border);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 16px 20px 32px 20px;
+  z-index: 9501;
+  transform: translateY(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bottom-sheet.visible {
+  transform: translateY(0%);
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background-color: var(--border);
+  border-radius: 2px;
+  margin: 0 auto;
+}
+
+.sheet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Inputs & Form Controls */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.input-field {
+  width: 100%;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  padding: 12px 14px;
+  color: var(--text-primary);
+  font-size: 16px;
+  outline: none;
+  font-family: inherit;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+}
+
+/* Color Swatches Selection Row */
+.color-swatch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px;
+}
+
+.swatch-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.swatch-btn.selected {
+  border-color: var(--text-primary);
+  transform: scale(1.15);
+}
+
+/* Icon Picker Grid */
+.icon-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+}
+
+.icon-option-btn {
+  height: 40px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.icon-option-btn:active, .icon-option-btn.selected {
+  background-color: var(--border);
+  border-color: var(--accent);
+}
+
+/* Buttons */
+.primary-btn {
+  width: 100%;
+  height: 48px;
+  background-color: var(--accent);
+  color: #0d0d0f;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.primary-btn:active {
+  opacity: 0.9;
+}
+
+.danger-btn {
+  width: 100%;
+  height: 48px;
+  background-color: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #f43f5e;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+    /* === CSS-5: Page View Layout, Cover, Breadcrumbs === */
+/* ==========================================
+   PAGE VIEW LAYOUT, COVER & BREADCRUMBS
+   ========================================== */
+
+/* Page Cover Wrapper */
+.page-cover-wrapper {
+  width: 100%;
+  height: 140px;
+  background-color: var(--surface-2);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  background-color: rgba(22, 22, 24, 0.75);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.cover-btn:active {
+  background-color: var(--surface);
+}
+
+/* Header Content Padding */
+.page-header-content {
+  padding: 16px 20px;
+  position: relative;
+}
+
+/* Page Icon Trigger */
+.page-icon-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 12px;
+  margin-top: -38px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 5;
+  transition: transform 0.15s ease;
+}
+
+.page-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Breadcrumbs Container */
+.breadcrumbs-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.breadcrumb-crumb {
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.breadcrumb-crumb:active {
+  background-color: var(--surface-2);
+  color: var(--accent);
+}
+
+.breadcrumb-crumb.active {
+  color: var(--text-primary);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.breadcrumb-separator {
+  color: var(--border);
+  font-size: 12px;
+}
+
+/* Page Title In-Place Editable */
+.page-title-editable {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+  outline: none;
+  margin-bottom: 16px;
+  word-break: break-word;
+}
+
+.page-title-editable:empty:before {
+  content: "Untitled Page";
+  color: var(--text-secondary);
+}
+
+/* Floating Action Button (+ Block) */
+.fab-add-block {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  color: #0d0d0f;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(167, 139, 250, 0.4);
+  z-index: 8000;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.fab-add-block:active {
+  transform: scale(0.92);
+}
+
+    /* === CSS-6: Layer 1 Block Types Styling === */
+/* ==========================================
+   LAYER 1 BLOCK TYPES STYLING
+   ========================================== */
+
+.blocks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 80px;
+}
+
+.block-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.block-actions-trigger {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.3;
+  margin-top: 2px;
+  transition: opacity 0.15s ease;
+}
+
+.block-wrapper:hover .block-actions-trigger,
+.block-actions-trigger:focus {
+  opacity: 1;
+}
+
+.block-content-area {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Headings */
+.block-h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 10px;
+}
+
+.block-h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 8px;
+}
+
+.block-h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 6px;
+}
+
+/* Paragraph Text */
+.block-text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+/* Lists */
+.block-bullet-list, .block-numbered-list {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.bullet-prefix {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  user-select: none;
+}
+
+.number-prefix {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 15px;
+  min-width: 18px;
+  user-select: none;
+}
+
+/* To-Do Block */
+.block-todo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.todo-checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.todo-checkbox.checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.block-todo.checked .block-text {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+/* Quote Block */
+.block-quote {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  font-style: italic;
+  color: var(--text-primary);
+}
+
+/* Callout Block */
+.block-callout {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.callout-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+/* Divider Block */
+.block-divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border);
+  margin: 12px 0;
+  border: none;
+}
+
+/* Image Block */
+.block-image-card {
+  width: 100%;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+}
+
+.block-image-card img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Sub-Page & Link-To-Page Blocks */
+.block-page-link-card {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.block-page-link-card:active {
+  border-color: var(--accent);
+  transform: scale(0.98);
+}
+
+.page-link-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Post Block */
+.block-post-card {
+  background: rgba(167, 139, 250, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  border-radius: var(--radius-card);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.post-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Add Block Sheet Menu Item Grid */
+.block-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.block-type-item {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.block-type-item:active {
+  border-color: var(--accent);
+}
+
+.block-type-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+    /* === CSS-7: Reordering & Sub-Page UI === */
+/* ==========================================
+   BLOCK DRAG & REORDER SYSTEM + SUB-PAGES
+   ========================================== */
+
+.drag-handle {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  opacity: 0.3;
+  margin-top: 2px;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.block-wrapper:hover .drag-handle,
+.drag-handle:focus,
+.drag-handle:active {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.block-wrapper.dragging {
+  opacity: 0.45;
+  background-color: var(--surface-2);
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius-btn);
+  transform: scale(0.98);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  z-index: 900;
+}
+
+/* Sub-page card details */
+.subpage-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--icon-blue);
+  background-color: rgba(123, 167, 212, 0.15);
+  border: 1px solid rgba(123, 167, 212, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+    /* === CSS-8: Search Screen & Results === */
+/* ==========================================
+   FULL-TEXT SEARCH ENGINE STYLING
+   ========================================== */
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.search-input-wrapper .search-icon-prefix {
+  position: absolute;
+  left: 14px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: 48px;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  padding: 0 44px 0 44px;
+  color: var(--text-primary);
+  font-size: 16px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 6px;
+}
+
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 24px;
+}
+
+.search-result-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.search-result-card:active {
+  border-color: var(--accent);
+  transform: scale(0.98);
+}
+
+.search-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-result-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.search-result-snippet {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+mark.search-highlight {
+  background-color: rgba(167, 139, 250, 0.25);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+    /* === CSS-9: Home Feed & Card Rotator === */
+/* ==========================================
+   HOME FEED & CARD ROTATOR STYLING
+   ========================================== */
+
+.feed-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 24px;
+}
+
+.feed-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.15s ease;
+}
+
+.feed-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.feed-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.feed-card-body {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.feed-card-body img {
+  width: 100%;
+  border-radius: var(--radius-btn);
+  margin-top: 8px;
+  display: block;
+}
+
+    /* === CSS-10: Vault PIN Screen & Encrypted UI === */
+/* ==========================================
+   VAULT PIN SCREEN & ENCRYPTED UI
+   ========================================== */
+
+.pin-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  gap: 20px;
+  padding: 20px;
+}
+
+.pin-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pin-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 260px;
+  margin-top: -10px;
+}
+
+.pin-dots {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0 20px 0;
+}
+
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pin-dot.filled {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.15);
+}
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 280px;
+  width: 100%;
+}
+
+.keypad-key {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, transform 0.1s ease;
+}
+
+.keypad-key:active {
+  background-color: var(--border);
+  color: var(--accent);
+  transform: scale(0.92);
+}
+
+.vault-unlocked-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+    /* === CSS-11: Backup & Restore UI === */
+/* ==========================================
+   BACKUP & RESTORE UI STYLING
+   ========================================== */
+
+.backup-card {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.backup-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backup-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.backup-card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.last-backup-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  background-color: rgba(167, 139, 250, 0.12);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+    /* === CSS-12: PWA Install Banner & Manifest Integration === */
+/* ==========================================
+   PWA INSTALL BANNER & OFFLINE UI
+   ========================================== */
+
+.pwa-install-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 16px;
+  right: 16px;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 9900;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0%); opacity: 1; }
+}
+
+    /* === CSS-13: Layer 2 Blocks & Templates === */
+/* ==========================================
+   LAYER 2 BLOCKS & LAYER 3 TEMPLATES
+   ========================================== */
+
+/* Toggle Collapsible Block */
+.block-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.toggle-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.toggle-arrow {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  color: var(--accent);
+}
+
+.block-toggle.collapsed .toggle-arrow {
+  transform: rotate(-90deg);
+}
+
+.toggle-body {
+  margin-left: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.block-toggle.collapsed .toggle-body {
+  display: none;
+}
+
+/* Table Block */
+.block-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  margin: 6px 0;
+}
+
+.block-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--surface-2);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+}
+
+.block-table td, .block-table th {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  min-width: 80px;
+}
+
+/* Smart Link Preview Card */
+.block-smart-link-card {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.block-smart-link-card:active {
+  border-color: var(--accent);
+}
+
+.smart-link-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.smart-link-domain {
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* Layer 3 Templates */
+/* Log Entry Card */
+.block-log-card {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--icon-amber);
+  background-color: rgba(196, 160, 90, 0.15);
+  border: 1px solid rgba(196, 160, 90, 0.3);
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  align-self: flex-start;
+  text-transform: uppercase;
+}
+
+.rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--icon-amber);
+  font-size: 18px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Quote Card Template */
+.block-quote-card {
+  background-color: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quote-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: right;
+}
+  </style>
+</head>
+<body>
+
+  <!-- === HTML-1: App Shell, Top Bar, Screen Stack Containers === -->
+<div id="app">
+
+<!-- SCREEN: HOME FEED -->
+  <section id="screen-home" class="screen active">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1 class="top-bar-title">Orbit</h1>
+      </div>
+      <div class="top-bar-right">
+        <button class="icon-btn" onclick="ScreenManager.push('screen-search')" title="Search">
+          <span class="svg-icon" data-icon="search" data-color="#f0f0f5"></span>
+        </button>
+        <button class="icon-btn" onclick="ScreenManager.push('screen-pages')" title="Pages">
+          <span class="svg-icon" data-icon="grid" data-color="#a78bfa"></span>
+        </button>
+      </div>
+    </header>
+    <main class="screen-body">
+      <div id="feed-container" class="feed-container"></div>
+    </main>
+  </section>
+
+<!-- SCREEN: PAGES GRID -->
+<!-- SCREEN: PAGES GRID -->
+  <section id="screen-pages" class="screen">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="icon-btn" onclick="ScreenManager.pop()" title="Back">
+          <span class="svg-icon" data-icon="arrow-left" data-color="#f0f0f5"></span>
+        </button>
+        <h1 class="top-bar-title">Pages</h1>
+      </div>
+      <div class="top-bar-right">
+        <!-- Backup & Restore Icon Button -->
+        <button class="icon-btn" onclick="BackupEngine.openBackupSheet()" title="Backup & Restore">
+          <span class="svg-icon" data-icon="bookmark" data-color="#a78bfa"></span>
+        </button>
+        <!-- Search Icon Button -->
+        <button class="icon-btn" onclick="ScreenManager.push('screen-search')" title="Search">
+          <span class="svg-icon" data-icon="search" data-color="#f0f0f5"></span>
+        </button>
+        <!-- New Page Icon Button -->
+        <button class="icon-btn" onclick="PagesController.openNewPageSheet()" title="New Page">
+          <span class="svg-icon" data-icon="plus" data-color="#a78bfa"></span>
+        </button>
+      </div>
+    </header>
+    <main class="screen-body">
+      <!-- 2-Column Pages Grid -->
+      <div id="pages-grid" class="pages-grid"></div>
+    </main>
+  </section>
+
+<!-- SCREEN: PAGE VIEW -->
+  <section id="screen-page-view" class="screen">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="icon-btn" onclick="ScreenManager.pop()" title="Back">
+          <span class="svg-icon" data-icon="arrow-left" data-color="#f0f0f5"></span>
+        </button>
+        <h1 class="top-bar-title" id="page-view-header-title">Page View</h1>
+      </div>
+      <div class="top-bar-right">
+        <button class="icon-btn" onclick="PageViewController.openCoverSheet()" title="Options">
+          <span class="svg-icon" data-icon="more-vertical" data-color="#f0f0f5"></span>
+        </button>
+      </div>
+    </header>
+
+    <main class="screen-body" style="padding: 0;">
+      <!-- Page Cover Banner -->
+      <div id="page-cover-wrapper" class="page-cover-wrapper" onclick="PageViewController.openCoverSheet()">
+        <img id="page-cover-img" class="page-cover-img" style="display: none;" src="" alt="Cover">
+        <button class="cover-btn" id="cover-action-btn">
+          <span class="svg-icon" data-icon="camera" data-color="#f0f0f5" data-size="16"></span>
+          <span id="cover-btn-text">Add Cover</span>
+        </button>
+        <input type="file" id="cover-file-input" accept="image/*" style="display: none;" onchange="PageViewController.handleCoverUpload(event)">
+      </div>
+
+      <!-- Main Header Body -->
+      <div class="page-header-content">
+        <!-- Page Icon Trigger -->
+        <div id="page-icon-btn" class="page-icon-btn" onclick="PageViewController.openIconSheet()">
+          <span id="page-icon-svg"></span>
+        </div>
+
+        <!-- Breadcrumbs Navigation Trail -->
+        <div id="breadcrumbs-container" class="breadcrumbs-container"></div>
+
+        <!-- In-Place Editable Title -->
+        <div id="page-title-editable" class="page-title-editable" contenteditable="true" spellcheck="false"></div>
+
+        <!-- Block List Container Placeholder -->
+        <div id="blocks-container" class="blocks-container">
+          <div class="placeholder-box" style="min-height: 160px; margin-top: 12px;">
+            <span class="svg-icon" data-icon="page" data-color="#6bbcbc" data-size="32"></span>
+            <p style="font-size: 13px;">Blocks will render here in Part 6</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Floating Action Button (+ Block) -->
+    <button class="fab-add-block" onclick="BlockEngine.openAddBlockSheet()" title="Add Block">
+      <span class="svg-icon" data-icon="plus" data-color="#0d0d0f" data-size="28"></span>
+    </button>
+  </section>
+
+<!-- SCREEN: SEARCH -->
+  <section id="screen-search" class="screen">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="icon-btn" onclick="ScreenManager.pop()" title="Back">
+          <span class="svg-icon" data-icon="arrow-left" data-color="#f0f0f5"></span>
+        </button>
+        <h1 class="top-bar-title">Search</h1>
+      </div>
+    </header>
+    <main class="screen-body">
+      <div class="search-input-wrapper">
+        <span class="svg-icon search-icon-prefix" data-icon="search" data-color="#7b7b8f" data-size="20"></span>
+        <input type="text" id="search-input" class="search-input" placeholder="Search pages and blocks..." autocomplete="off" oninput="SearchEngine.onInput(event)">
+        <button id="search-clear-btn" class="icon-btn search-clear-btn" style="display: none;" onclick="SearchEngine.clearSearch()">
+          <span class="svg-icon" data-icon="plus" data-color="#7b7b8f" data-size="18" style="transform: rotate(45deg);"></span>
+        </button>
+      </div>
+
+      <div id="search-results-list" class="search-results-list">
+        <div class="placeholder-box" style="min-height: 200px;">
+          <span class="svg-icon" data-icon="search" data-color="#7b7b8f" data-size="32"></span>
+          <p>Type keywords to search across your pages</p>
+        </div>
+      </div>
+    </main>
+  </section>
+
+<!-- SCREEN: VAULT -->
+  <section id="screen-vault" class="screen">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="icon-btn" onclick="ScreenManager.pop()" title="Back">
+          <span class="svg-icon" data-icon="arrow-left" data-color="#f0f0f5"></span>
+        </button>
+        <h1 class="top-bar-title" id="vault-header-title">Vault</h1>
+      </div>
+      <div class="top-bar-right" id="vault-top-bar-right">
+        <!-- Re-lock button injected when unlocked -->
+      </div>
+    </header>
+
+    <main class="screen-body" id="vault-main-body">
+      <!-- PIN LOCK PAD VIEW -->
+      <div id="vault-pin-view" class="pin-container">
+        <div id="vault-lock-icon">${getIconSVG('lock', '#d48b9a', 36)}</div>
+        <h2 class="pin-title" id="pin-screen-title">Enter Vault PIN</h2>
+        <p class="pin-subtitle" id="pin-screen-subtitle">Your encrypted personal storage</p>
+
+        <div class="pin-dots">
+          <div class="pin-dot" id="dot-0"></div>
+          <div class="pin-dot" id="dot-1"></div>
+          <div class="pin-dot" id="dot-2"></div>
+          <div class="pin-dot" id="dot-3"></div>
+        </div>
+
+        <div class="keypad-grid">
+          <button class="keypad-key" onclick="VaultEngine.pressKey('1')">1</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('2')">2</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('3')">3</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('4')">4</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('5')">5</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('6')">6</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('7')">7</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('8')">8</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('9')">9</button>
+          <button class="keypad-key" style="font-size: 14px; font-weight:700;" onclick="VaultEngine.clearPin()">CLR</button>
+          <button class="keypad-key" onclick="VaultEngine.pressKey('0')">0</button>
+          <button class="keypad-key" style="font-size: 18px;" onclick="VaultEngine.backspacePin()">⌫</button>
+        </div>
+      </div>
+
+      <!-- UNLOCKED VAULT PAGE VIEW CONTAINER -->
+      <div id="vault-content-view" style="display: none;">
+        <div class="page-header-content" style="padding-top: 0;">
+          <div id="vault-breadcrumbs-container" class="breadcrumbs-container"></div>
+          <div id="vault-page-title" class="page-title-editable" style="margin-top: 8px;">Vault</div>
+          <div id="vault-blocks-container" class="blocks-container"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- FAB for Vault Block Addition -->
+    <button id="vault-fab" class="fab-add-block" style="display: none;" onclick="VaultEngine.addVaultBlock()" title="Add Vault Block">
+      <span class="svg-icon" data-icon="plus" data-color="#0d0d0f" data-size="28"></span>
+    </button>
+  </section>
+
+</div>
+
+  <!-- === HTML-2: Storage Status Overlays === -->
+<!-- Toast Notification Container -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Database Loader Overlay -->
+<div id="db-loader" class="db-loader-overlay">
+  <div class="spinner"></div>
+  <span style="font-size: 14px; font-weight: 500; color: var(--text-secondary);">Initializing Orbit database...</span>
+</div>
+
+  <!-- === HTML-3: Rich Text Floating Formatting Toolbar === -->
+<!-- Floating Rich Text Formatting Toolbar -->
+<div id="format-toolbar" class="format-toolbar">
+  <button class="format-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+  <button class="format-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+  <button class="format-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+  
+  <div class="toolbar-divider"></div>
+  
+  <button class="format-btn" id="btn-text-color" title="Text Color">
+    <span style="border-bottom: 3px solid var(--accent); padding: 0 2px;">A</span>
+  </button>
+  <button class="format-btn" id="btn-bg-color" title="Highlight Color">
+    <span style="background: rgba(167, 139, 250, 0.35); padding: 2px 4px; border-radius: 4px;">A</span>
+  </button>
+
+  <!-- Color Palette Swatch Sub-Panels -->
+  <div id="text-color-panel" class="color-picker-panel" style="display: none;"></div>
+  <div id="bg-color-panel" class="color-picker-panel" style="display: none;"></div>
+</div>
+
+  <!-- === HTML-4: Pages Section UI & New Page Sheets === -->
+<!-- Bottom Sheet Backdrop Overlay -->
+<div id="sheet-backdrop" class="sheet-backdrop" onclick="PagesController.closeAllSheets()"></div>
+
+<!-- NEW PAGE BOTTOM SHEET -->
+<div id="sheet-new-page" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">New Page</h2>
+
+  <div class="form-group">
+    <label class="form-label">Page Title</label>
+    <input type="text" id="new-page-title-input" class="input-field" placeholder="e.g. Journal, Project Ideas, Book Logs" maxlength="80">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Icon Color</label>
+    <div id="color-swatch-row" class="color-swatch-row"></div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Select Icon</label>
+    <div id="icon-picker-grid" class="icon-picker-grid"></div>
+  </div>
+
+  <button class="primary-btn" onclick="PagesController.createNewPage()">Create Page</button>
+</div>
+
+<!-- PAGE OPTIONS BOTTOM SHEET -->
+<div id="sheet-page-options" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title" id="options-sheet-title">Page Options</h2>
+
+  <button class="primary-btn" style="background-color: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border);" onclick="PagesController.openRenameSheet()">
+    Rename Page
+  </button>
+  <button class="danger-btn" onclick="PagesController.confirmDeletePage()">
+    Delete Page
+  </button>
+</div>
+
+<!-- RENAME PAGE BOTTOM SHEET -->
+<div id="sheet-rename-page" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Rename Page</h2>
+
+  <div class="form-group">
+    <label class="form-label">New Title</label>
+    <input type="text" id="rename-page-input" class="input-field" placeholder="Enter page title" maxlength="80">
+  </div>
+
+  <button class="primary-btn" onclick="PagesController.saveRenamePage()">Save Title</button>
+</div>
+
+  <!-- === HTML-5: Page View Container === -->
+<!-- PAGE COVER OPTIONS SHEET -->
+<div id="sheet-cover-options" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Cover Image</h2>
+
+  <button class="primary-btn" onclick="document.getElementById('cover-file-input').click()">
+    Upload Cover Image
+  </button>
+  <button class="danger-btn" id="btn-remove-cover" onclick="PageViewController.removeCover()" style="display: none;">
+    Remove Cover
+  </button>
+</div>
+
+<!-- CHANGE PAGE ICON SHEET -->
+<div id="sheet-change-icon" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Change Icon & Color</h2>
+
+  <div class="form-group">
+    <label class="form-label">Icon Color</label>
+    <div id="page-color-swatch-row" class="color-swatch-row"></div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Select Icon</label>
+    <div id="page-icon-picker-grid" class="icon-picker-grid"></div>
+  </div>
+
+  <button class="primary-btn" onclick="PageViewController.saveIconAndColor()">Save Icon</button>
+</div>
+
+  <!-- === HTML-6: Block Insertion Menu & Options Sheet === -->
+<!-- ADD BLOCK BOTTOM SHEET -->
+<div id="sheet-add-block" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Add Block</h2>
+
+  <div id="block-type-grid" class="block-type-grid"></div>
+</div>
+
+<!-- BLOCK OPTIONS SHEET -->
+<div id="sheet-block-options" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Block Options</h2>
+
+  <button class="primary-btn" style="background-color: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border);" onclick="BlockEngine.moveTargetBlock(-1)">
+    Move Up
+  </button>
+  <button class="primary-btn" style="background-color: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border);" onclick="BlockEngine.moveTargetBlock(1)">
+    Move Down
+  </button>
+  <button class="danger-btn" onclick="BlockEngine.deleteTargetBlock()">
+    Delete Block
+  </button>
+</div>
+
+<!-- Block Image File Input -->
+<input type="file" id="block-image-file-input" accept="image/*" style="display: none;" onchange="BlockEngine.handleImageBlockUpload(event)">
+
+  <!-- === HTML-7: Drag/Drop Handles === -->
+<!-- Drag Drop Indicator Line -->
+<div id="drag-indicator" class="drop-indicator" style="display: none;"></div>
+
+  <!-- === HTML-8: Search UI Screen === -->
+  <!-- Paste HTML-8 here -->
+
+  <!-- === HTML-9: Home Feed Screen === -->
+  <!-- Paste HTML-9 here -->
+
+  <!-- === HTML-10: Vault PIN Screen === -->
+  <!-- Paste HTML-10 here -->
+
+  <!-- === HTML-11: Backup & Restore Dialogs === -->
+<!-- BACKUP & RESTORE SHEET -->
+<div id="sheet-backup-restore" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Data Backup & Restore</h2>
+
+  <!-- Export Card -->
+  <div class="backup-card">
+    <div class="backup-card-header">
+      ${getIconSVG('bookmark', '#a78bfa', 20)}
+      <span class="backup-card-title">Export Backup JSON</span>
+    </div>
+    <p class="backup-card-desc">Saves all pages, blocks, and settings to a JSON file. Vault data remains encrypted.</p>
+    <div id="last-backup-date-badge" class="last-backup-badge">Last backup: Never</div>
+    <button class="primary-btn" onclick="BackupEngine.exportBackup()">Export Backup File</button>
+  </div>
+
+  <!-- Restore Card -->
+  <div class="backup-card">
+    <div class="backup-card-header">
+      ${getIconSVG('zap', '#c4a05a', 20)}
+      <span class="backup-card-title">Restore from JSON</span>
+    </div>
+    <p class="backup-card-desc">Overwrites current app state with data from a backup JSON file.</p>
+    <button class="danger-btn" onclick="document.getElementById('restore-file-input').click()">Import & Restore</button>
+  </div>
+</div>
+
+<!-- Restore Hidden File Input -->
+<input type="file" id="restore-file-input" accept=".json" style="display: none;" onchange="BackupEngine.handleRestoreFile(event)">
+
+  <!-- === HTML-12: PWA Install Containers === -->
+<!-- PWA INSTALL BANNER -->
+<div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    ${getIconSVG('rocket', '#a78bfa', 24)}
+    <div>
+      <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Install Orbit</div>
+      <div style="font-size: 12px; color: var(--text-secondary);">Add to Home Screen for app mode</div>
+    </div>
+  </div>
+  <button class="primary-btn" style="width: auto; height: 36px; padding: 0 14px; font-size: 13px;" onclick="PWAEngine.installPWA()">Install</button>
+</div>
+
+  <!-- === HTML-13: Layer 2 & 3 Modals === -->
+<!-- Smart Link Input Dialog Sheet -->
+<div id="sheet-smart-link-input" class="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <h2 class="sheet-title">Insert Smart Link</h2>
+
+  <div class="form-group">
+    <label class="form-label">URL Link</label>
+    <input type="url" id="smart-link-url-input" class="input-field" placeholder="https://example.com/article">
+  </div>
+
+  <button class="primary-btn" onclick="Layer2And3Engine.saveSmartLinkBlock()">Add Link Card</button>
+</div>
+
+  <script>
+    // === JS-1: App Core, SVG Icon Library (44 icons) & Screen Router ===
+/* ==========================================
+   ICON PALETTE & SVG LIBRARY (44 CUSTOM ICONS)
+   ========================================== */
+const ICON_COLORS = {
+  slate: '#8b8fa8',
+  violet: '#a78bfa',
+  blue: '#7ba7d4',
+  teal: '#6bbcbc',
+  green: '#7bba8b',
+  amber: '#c4a05a',
+  rose: '#d48b9a',
+  mauve: '#b48bd4'
+};
+
+const ICONS = {
+  // Documents
+  'page': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+  'note': '<path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"/><path d="M15 3v6h6"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
+  'book': '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  'journal': '<rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="12" y1="8" x2="16" y2="8"/><line x1="12" y1="12" x2="16" y2="12"/>',
+  'list': '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+  'check': '<polyline points="20 6 9 17 4 12"/>',
+  'pen': '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+  'feather': '<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L3 13v5h5l8.76-8.76zm-11.5 2.5l5-5"/>',
+
+  // Ideas
+  'lightbulb': '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.55.59 2.8 1.5 3.5.76.76 1.23 1.52 1.41 2.5h6.18z"/>',
+  'compass': '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+  'target': '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  'zap': '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  'infinity': '<path d="M18.178 8c5.096 0 5.096 8 0 8-2.32 0-4.148-1.785-6.178-4-2.03 2.215-3.857 4-6.178 4-5.096 0-5.096-8 0-8 2.32 0 4.148 1.785 6.178 4 2.03-2.215 3.857-4 6.178-4z"/>',
+
+  // Life
+  'heart': '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+  'star': '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  'home': '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  'sun': '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+  'moon': '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+  'leaf': '<path d="M11 20A9 9 0 0 1 3 12 9 9 0 0 1 15 3c2 0 6 1 6 6a9 9 0 0 1-9 9 9 9 0 0 1-1 2z"/><line x1="3" y1="21" x2="12" y2="12"/>',
+  'smile': '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+
+  // Work
+  'briefcase': '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  'trophy': '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7.5"/><path d="M14 14.66V17c0 .55.45 1 1 1h1.5"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>',
+  'rocket': '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-3.05 11a22.35 22.35 0 0 1-3.95 2z"/><path d="M9 12l-2 2a2.12 2.12 0 0 0 0 3l1 1"/><path d="M12 9l2-2a2.12 2.12 0 0 1 3 0l1 1"/>',
+  'chart': '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  'flag': '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
+  'gem': '<polygon points="6 3 18 3 22 9 12 22 2 9 6 3"/><line x1="11" y1="3" x2="8" y2="9"/><line x1="13" y1="3" x2="16" y2="9"/><line x1="2" y1="9" x2="22" y2="9"/>',
+
+  // Learning & Media
+  'graduation': '<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
+  'headphones': '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  'film': '<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
+  'music': '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  'camera': '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  'palette': '<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.75 1.7-1.7 0-.42-.16-.82-.43-1.12-.27-.3-.42-.71-.42-1.13 0-.95.8-1.75 1.75-1.75H17c2.8 0 5-2.2 5-5 0-6.1-4.5-11-10-11z"/>',
+
+  // Nature
+  'globe': '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  'mountain': '<path d="M8 3l4 8 5-5 5 15H2L8 3z"/>',
+  'cloud': '<path d="M18 10h-1.26A8 8 0 1 0 3 16.3h15a5 5 0 0 0 0-10z"/>',
+  'tree': '<path d="M12 19v3M12 3L5 11h3l-3 5h14l-3-5h3L12 3z"/>',
+  'wave': '<path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>',
+
+  // Tech
+  'code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  'cpu': '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/>',
+  'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+
+  // Lifestyle
+  'coffee': '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+  'map': '<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>',
+  'plane': '<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3.5c-.5-.5-2.5 0-4 1.5L13.5 8.5 5.3 6.7c-.9-.2-1.8.3-2.1 1.2l-.3.9 6 3.6-3 3-2.2-.6-1.2 1.2 3.2 2.2 2.2 3.2 1.2-1.2-.6-2.2 3-3 3.6 6 .9-.3c.9-.3 1.4-1.2 1.2-2.1z"/>',
+
+  // Misc
+  'bookmark': '<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+  'calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  'clock': '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  'key': '<path d="M21 2l-2 2m-1.5 1.5L14 9.5a5 5 0 1 0 2 2l2.5-2.5m1.5-1.5L22 5l-2-2m-2 2l2 2"/>',
+  'lock': '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'user': '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  'gift': '<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+
+  // App UI Navigation Controls
+  'grid': '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  'arrow-left': '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+  'search': '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  'plus': '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  'more-vertical': '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
+  'sparkles': '<path d="M12 3v3m0 12v3M3 12h3m12 0h3m-4.5-6.5l-2 2m-7 7l-2 2m11 0l-2-2m-7-7l-2-2"/>'
+};
+
+function getIconSVG(name, color = '#a78bfa', size = 24) {
+  const iconPath = ICONS[name] || ICONS['page'];
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg>`;
+}
+
+function renderIcons() {
+  document.querySelectorAll('.svg-icon').forEach(el => {
+    const iconName = el.getAttribute('data-icon');
+    const color = el.getAttribute('data-color') || '#a78bfa';
+    const size = el.getAttribute('data-size') || 24;
+    el.innerHTML = getIconSVG(iconName, color, size);
+  });
+}
+
+/* ==========================================
+   SCREEN NAVIGATION STACK MANAGER
+   ========================================== */
+const ScreenManager = {
+  stack: ['screen-home'],
+
+  init() {
+    window.addEventListener('popstate', (e) => {
+      if (this.stack.length > 1) {
+        this.pop(true);
+      }
+    });
+    // Push initial state
+    history.replaceState({ screenId: 'screen-home' }, '');
+    renderIcons();
+  },
+
+  push(screenId, params = {}) {
+    const currentScreenId = this.stack[this.stack.length - 1];
+    if (currentScreenId === screenId) return;
+
+    const currentScreen = document.getElementById(currentScreenId);
+    const targetScreen = document.getElementById(screenId);
+
+    if (!targetScreen) return;
+
+    // Prepare transitions
+    targetScreen.classList.remove('exit-left');
+    targetScreen.classList.add('enter-right');
+    targetScreen.offsetHeight; // Force reflow
+
+    currentScreen.classList.remove('active');
+    currentScreen.classList.add('exit-left');
+
+    targetScreen.classList.remove('enter-right');
+    targetScreen.classList.add('active');
+
+    this.stack.push(screenId);
+    history.pushState({ screenId: screenId, params: params }, '');
+  },
+
+  pop(isPopState = false) {
+    if (this.stack.length <= 1) return;
+
+    const currentScreenId = this.stack.pop();
+    const targetScreenId = this.stack[this.stack.length - 1];
+
+    const currentScreen = document.getElementById(currentScreenId);
+    const targetScreen = document.getElementById(targetScreenId);
+
+    currentScreen.classList.remove('active');
+    currentScreen.classList.add('enter-right');
+
+    targetScreen.classList.remove('exit-left');
+    targetScreen.classList.add('active');
+
+    if (!isPopState) {
+      history.back();
+    }
+  }
+};
+
+// Initialize App Shell on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+  ScreenManager.init();
+});
+
+    // === JS-2: IndexedDB Data Layer & Core CRUD APIs ===
+/* ==========================================
+   UTILITY & TOAST SYSTEM
+   ========================================== */
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+}
+
+function showToast(message, duration = 2500) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+
+  container.appendChild(toast);
+  
+  // Force reflow
+  toast.offsetHeight;
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+/* ==========================================
+   INDEXEDDB DATA LAYER (orbit_db)
+   ========================================== */
+const DB = {
+  dbName: 'orbit_db',
+  version: 1,
+  db: null,
+  initPromise: null,
+
+  init() {
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.version);
+
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+
+        // 1. Pages Store
+        if (!db.objectStoreNames.contains('pages')) {
+          const pagesStore = db.createObjectStore('pages', { keyPath: 'id' });
+          pagesStore.createIndex('parentId', 'parentId', { unique: false });
+          pagesStore.createIndex('type', 'type', { unique: false });
+        }
+
+        // 2. Blocks Store
+        if (!db.objectStoreNames.contains('blocks')) {
+          const blocksStore = db.createObjectStore('blocks', { keyPath: 'id' });
+          blocksStore.createIndex('pageId', 'pageId', { unique: false });
+          blocksStore.createIndex('parentId', 'parentId', { unique: false });
+        }
+
+        // 3. Settings Store
+        if (!db.objectStoreNames.contains('settings')) {
+          db.createObjectStore('settings', { keyPath: 'key' });
+        }
+      };
+
+      request.onsuccess = async (e) => {
+        this.db = e.target.result;
+        await this.seedInitialData();
+        
+        // Hide loader overlay
+        const loader = document.getElementById('db-loader');
+        if (loader) {
+          loader.classList.add('hidden');
+        }
+        resolve(this.db);
+      };
+
+      request.onerror = (e) => {
+        console.error('IndexedDB Error:', e.target.error);
+        showToast('Database error: Unable to load IndexedDB');
+        reject(e.target.error);
+      };
+    });
+
+    return this.initPromise;
+  },
+
+  // Generic Transaction Wrapper (Auto-waits if DB is initializing)
+  async tx(storeName, mode, callback) {
+    if (!this.db) {
+      await this.init();
+    }
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(storeName, mode);
+      const store = transaction.objectStore(storeName);
+      const request = callback(store);
+
+      transaction.oncomplete = () => resolve(request ? request.result : true);
+      transaction.onerror = () => reject(transaction.error);
+    });
+  },
+
+  /* --- PAGES CRUD --- */
+  getPages() {
+    return this.tx('pages', 'readonly', (store) => store.getAll());
+  },
+
+  getPage(id) {
+    return this.tx('pages', 'readonly', (store) => store.get(id));
+  },
+
+  savePage(page) {
+    const now = Date.now();
+    page.createdAt = page.createdAt || now;
+    page.updatedAt = now;
+    return this.tx('pages', 'readwrite', (store) => store.put(page));
+  },
+
+  async deletePage(id) {
+    // Delete page blocks
+    const blocks = await this.getBlocks(id);
+    for (const b of blocks) {
+      await this.deleteBlock(b.id);
+    }
+    // Delete child sub-pages recursively
+    const pages = await this.getPages();
+    const children = pages.filter(p => p.parentId === id);
+    for (const child of children) {
+      await this.deletePage(child.id);
+    }
+    // Delete page itself
+    return this.tx('pages', 'readwrite', (store) => store.delete(id));
+  },
+
+  /* --- BLOCKS CRUD --- */
+  async getBlocks(pageId) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction('blocks', 'readonly');
+      const store = tx.objectStore('blocks');
+      const index = store.index('pageId');
+      const request = index.getAll(pageId);
+
+      request.onsuccess = () => {
+        const blocks = request.result || [];
+        blocks.sort((a, b) => a.order - b.order);
+        resolve(blocks);
+      };
+      request.onerror = () => reject(tx.error);
+    });
+  },
+
+  saveBlock(block) {
+    const now = Date.now();
+    block.createdAt = block.createdAt || now;
+    block.updatedAt = now;
+    return this.tx('blocks', 'readwrite', (store) => store.put(block));
+  },
+
+  async saveBlocks(blocksArray) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction('blocks', 'readwrite');
+      const store = tx.objectStore('blocks');
+      const now = Date.now();
+
+      blocksArray.forEach(block => {
+        block.createdAt = block.createdAt || now;
+        block.updatedAt = now;
+        store.put(block);
+      });
+
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+
+  deleteBlock(id) {
+    return this.tx('blocks', 'readwrite', (store) => store.delete(id));
+  },
+
+  /* --- SETTINGS CRUD --- */
+  async getSetting(key) {
+    const result = await this.tx('settings', 'readonly', (store) => store.get(key));
+    return result ? result.value : null;
+  },
+
+  saveSetting(key, value) {
+    return this.tx('settings', 'readwrite', (store) => store.put({ key, value }));
+  },
+
+  /* --- INITIAL DATA SEEDING --- */
+  async seedInitialData() {
+    const pages = await this.getPages();
+    
+    // 1. Ensure the fixed Vault page exists
+    let vaultPage = pages.find(p => p.type === 'vault');
+    if (!vaultPage) {
+      vaultPage = {
+        id: generateId(),
+        name: 'Vault',
+        icon: 'lock',
+        iconColor: '#d48b9a',
+        cover: null,
+        parentId: null,
+        type: 'vault',
+        order: 999,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      await this.savePage(vaultPage);
+    }
+
+    // 2. If no normal pages exist, create a Welcome Page with initial sample blocks
+    const normalPages = pages.filter(p => p.type !== 'vault');
+    if (normalPages.length === 0) {
+      const welcomePageId = generateId();
+      const welcomePage = {
+        id: welcomePageId,
+        name: 'Welcome to Orbit',
+        icon: 'sparkles',
+        iconColor: '#a78bfa',
+        cover: null,
+        parentId: null,
+        type: 'normal',
+        order: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      await this.savePage(welcomePage);
+
+      // Seed Initial Blocks
+      const sampleBlocks = [
+        {
+          id: generateId(),
+          pageId: welcomePageId,
+          parentId: null,
+          type: 'h1',
+          content: 'Your private feed & vault',
+          order: 0,
+          meta: {}
+        },
+        {
+          id: generateId(),
+          pageId: welcomePageId,
+          parentId: null,
+          type: 'callout',
+          content: 'Orbit replaces social media with your own personal stream of ideas, journals, and knowledge.',
+          order: 1,
+          meta: { icon: 'lightbulb' }
+        },
+        {
+          id: generateId(),
+          pageId: welcomePageId,
+          parentId: null,
+          type: 'post',
+          content: 'This is a Post block. Any post block placed in your pages will automatically rotate on your Home Feed every day at midnight.',
+          order: 2,
+          meta: {}
+        }
+      ];
+
+      await this.saveBlocks(sampleBlocks);
+    }
+  }
+};
+
+// Auto-initialize DB when DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await DB.init();
+    showToast('Orbit ready');
+  } catch (err) {
+    console.error('Database initialization failed:', err);
+  }
+});
+
+    // === JS-3: Rich Text Formatting Engine ===
+/* ==========================================
+   RICH TEXT FORMATTING ENGINE
+   ========================================== */
+const TEXT_COLORS = [
+  { name: 'Default', hex: 'inherit', isClear: true },
+  { name: 'Slate', hex: '#8b8fa8' },
+  { name: 'Violet', hex: '#a78bfa' },
+  { name: 'Blue', hex: '#7ba7d4' },
+  { name: 'Teal', hex: '#6bbcbc' },
+  { name: 'Green', hex: '#7bba8b' },
+  { name: 'Amber', hex: '#c4a05a' },
+  { name: 'Rose', hex: '#d48b9a' },
+  { name: 'Mauve', hex: '#b48bd4' },
+  { name: 'Gray', hex: '#71717a' },
+  { name: 'Red', hex: '#f43f5e' }
+];
+
+const HIGHLIGHT_COLORS = [
+  { name: 'None', hex: 'transparent', isClear: true },
+  { name: 'Slate', hex: 'rgba(139, 143, 168, 0.35)' },
+  { name: 'Violet', hex: 'rgba(167, 139, 250, 0.35)' },
+  { name: 'Blue', hex: 'rgba(123, 167, 212, 0.35)' },
+  { name: 'Teal', hex: 'rgba(107, 188, 188, 0.35)' },
+  { name: 'Green', hex: 'rgba(123, 186, 139, 0.35)' },
+  { name: 'Amber', hex: 'rgba(196, 160, 90, 0.35)' },
+  { name: 'Rose', hex: 'rgba(212, 139, 154, 0.35)' }
+];
+
+const Formatter = {
+  toolbar: null,
+  savedRange: null,
+  activePanel: null,
+
+  init() {
+    this.toolbar = document.getElementById('format-toolbar');
+    this.buildColorPanels();
+    this.bindEvents();
+  },
+
+  buildColorPanels() {
+    const textColorPanel = document.getElementById('text-color-panel');
+    const bgColorPanel = document.getElementById('bg-color-panel');
+
+    // Build 11 Text Colors
+    TEXT_COLORS.forEach(c => {
+      const swatch = document.createElement('div');
+      swatch.className = 'color-swatch' + (c.isClear ? ' clear-swatch' : '');
+      if (!c.isClear) swatch.style.backgroundColor = c.hex;
+      swatch.title = c.name;
+      swatch.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        this.applyTextColor(c.hex);
+      });
+      textColorPanel.appendChild(swatch);
+    });
+
+    // Build 8 Highlight Colors
+    HIGHLIGHT_COLORS.forEach(c => {
+      const swatch = document.createElement('div');
+      swatch.className = 'color-swatch' + (c.isClear ? ' clear-swatch' : '');
+      if (!c.isClear) swatch.style.backgroundColor = c.hex;
+      swatch.title = c.name;
+      swatch.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        this.applyHighlightColor(c.hex);
+      });
+      bgColorPanel.appendChild(swatch);
+    });
+  },
+
+  bindEvents() {
+    // Listen for text selection
+    document.addEventListener('selectionchange', () => this.handleSelection());
+    document.addEventListener('mouseup', () => this.handleSelection());
+    document.addEventListener('keyup', () => this.handleSelection());
+
+    // Toolbar Command Buttons
+    this.toolbar.querySelectorAll('.format-btn[data-cmd]').forEach(btn => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const cmd = btn.getAttribute('data-cmd');
+        this.executeCommand(cmd);
+      });
+    });
+
+    // Color Panel Toggles
+    const btnText = document.getElementById('btn-text-color');
+    const btnBg = document.getElementById('btn-bg-color');
+
+    btnText.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      this.togglePanel('text-color-panel');
+    });
+
+    btnBg.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      this.togglePanel('bg-color-panel');
+    });
+
+    // Hide panels on outside click
+    document.addEventListener('mousedown', (e) => {
+      if (!this.toolbar.contains(e.target)) {
+        this.hidePanels();
+      }
+    });
+  },
+
+  saveSelection() {
+    const sel = window.getSelection();
+    if (sel.rangeCount > 0) {
+      this.savedRange = sel.getRangeAt(0).cloneRange();
+    }
+  },
+
+  restoreSelection() {
+    if (this.savedRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(this.savedRange);
+    }
+  },
+
+  handleSelection() {
+    const sel = window.getSelection();
+
+    if (!sel || sel.isCollapsed || sel.toString().trim().length === 0) {
+      this.hideToolbar();
+      return;
+    }
+
+    // Ensure selection is inside a contenteditable block
+    let anchorNode = sel.anchorNode;
+    if (anchorNode.nodeType === Node.TEXT_NODE) {
+      anchorNode = anchorNode.parentNode;
+    }
+
+    const editableElem = anchorNode.closest('[contenteditable="true"]');
+    if (!editableElem) {
+      this.hideToolbar();
+      return;
+    }
+
+    this.saveSelection();
+    this.positionToolbar(sel.getRangeAt(0).getBoundingClientRect());
+  },
+
+  positionToolbar(rect) {
+    if (!rect) return;
+
+    this.toolbar.classList.add('visible');
+
+    const toolbarWidth = this.toolbar.offsetWidth;
+    const toolbarHeight = this.toolbar.offsetHeight;
+
+    let top = rect.top - toolbarHeight - 10;
+    let left = rect.left + (rect.width / 2) - (toolbarWidth / 2);
+
+    // Flip below if too close to top of viewport
+    if (top < 12) {
+      top = rect.bottom + 10;
+    }
+
+    // Keep within horizontal bounds
+    left = Math.max(12, Math.min(left, window.innerWidth - toolbarWidth - 12));
+
+    this.toolbar.style.top = `${top}px`;
+    this.toolbar.style.left = `${left}px`;
+  },
+
+  hideToolbar() {
+    if (this.toolbar) {
+      this.toolbar.classList.remove('visible');
+      this.hidePanels();
+    }
+  },
+
+  togglePanel(panelId) {
+    const panel = document.getElementById(panelId);
+    const isVisible = panel.style.display !== 'none';
+    this.hidePanels();
+    if (!isVisible) {
+      panel.style.display = 'flex';
+      this.activePanel = panel;
+    }
+  },
+
+  hidePanels() {
+    document.getElementById('text-color-panel').style.display = 'none';
+    document.getElementById('bg-color-panel').style.display = 'none';
+    this.activePanel = null;
+  },
+
+  executeCommand(cmd) {
+    this.restoreSelection();
+    document.execCommand(cmd, false, null);
+    this.handleSelection();
+  },
+
+  applyTextColor(colorHex) {
+    this.restoreSelection();
+    document.execCommand('foreColor', false, colorHex);
+    this.hidePanels();
+    this.handleSelection();
+  },
+
+  applyHighlightColor(colorHex) {
+    this.restoreSelection();
+    // Use hiliteColor or backColor for WebKit compatibility
+    if (!document.execCommand('hiliteColor', false, colorHex)) {
+      document.execCommand('backColor', false, colorHex);
+    }
+    this.hidePanels();
+    this.handleSelection();
+  }
+};
+
+// Initialize Formatter Engine on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+  Formatter.init();
+});
+
+    // === JS-4: Pages Screen Controller ===
+/* ==========================================
+   PAGES GRID & BOTTOM SHEET CONTROLLER
+   ========================================== */
+const ICON_LIST = [
+  'page', 'note', 'book', 'journal', 'list', 'check', 'pen', 'feather',
+  'lightbulb', 'compass', 'target', 'zap', 'infinity',
+  'heart', 'star', 'home', 'sun', 'moon', 'leaf', 'smile',
+  'briefcase', 'trophy', 'rocket', 'chart', 'flag', 'gem',
+  'graduation', 'headphones', 'film', 'music', 'camera', 'palette',
+  'globe', 'mountain', 'cloud', 'tree', 'wave',
+  'code', 'cpu', 'link', 'coffee', 'map', 'plane',
+  'bookmark', 'calendar', 'clock', 'key', 'lock', 'user', 'gift'
+];
+
+const PagesController = {
+  selectedIcon: 'lightbulb',
+  selectedColorKey: 'violet',
+  selectedColorHex: '#a78bfa',
+  targetPageId: null,
+
+  async init() {
+    await DB.init();
+    await this.renderPages();
+    this.buildColorSwatches();
+    this.buildIconPicker();
+  },
+
+  async renderPages() {
+    const grid = document.getElementById('pages-grid');
+    if (!grid) return;
+
+    const pages = await DB.getPages();
+    // Render only top-level pages (parentId === null)
+    const topLevelPages = pages.filter(p => p.parentId === null);
+
+    grid.innerHTML = '';
+
+    topLevelPages.forEach(page => {
+      const card = document.createElement('div');
+      card.className = 'page-card';
+
+      const isVault = page.type === 'vault';
+      const iconColor = page.iconColor || '#a78bfa';
+
+      card.innerHTML = `
+        ${isVault ? `<div class="vault-badge">${getIconSVG('lock', '#d48b9a', 12)} Vault</div>` : ''}
+        <div class="page-card-icon">
+          ${getIconSVG(page.icon || (isVault ? 'lock' : 'page'), iconColor, 22)}
+        </div>
+        <div class="page-card-title">${page.name}</div>
+      `;
+
+      // Tap Handler & Long Press Handler
+      this.attachEvents(card, page);
+      grid.appendChild(card);
+    });
+  },
+
+  attachEvents(card, page) {
+    let pressTimer = null;
+    let isLongPress = false;
+
+    const start = () => {
+      isLongPress = false;
+      pressTimer = setTimeout(() => {
+        isLongPress = true;
+        if (page.type !== 'vault') {
+          this.openOptionsSheet(page);
+        }
+      }, 520);
+    };
+
+    const cancel = () => {
+      clearTimeout(pressTimer);
+    };
+
+    const end = () => {
+      clearTimeout(pressTimer);
+      if (!isLongPress) {
+        if (page.type === 'vault') {
+          ScreenManager.push('screen-vault');
+        } else {
+          ScreenManager.push('screen-page-view', { pageId: page.id });
+        }
+      }
+    };
+
+    card.addEventListener('touchstart', start, { passive: true });
+    card.addEventListener('touchend', end);
+    card.addEventListener('touchmove', cancel, { passive: true });
+    card.addEventListener('mousedown', start);
+    card.addEventListener('mouseup', end);
+    card.addEventListener('mouseleave', cancel);
+  },
+
+  buildColorSwatches() {
+    const row = document.getElementById('color-swatch-row');
+    if (!row) return;
+
+    row.innerHTML = '';
+
+    Object.entries(ICON_COLORS).forEach(([key, hex]) => {
+      const btn = document.createElement('button');
+      btn.className = 'swatch-btn' + (key === this.selectedColorKey ? ' selected' : '');
+      btn.style.backgroundColor = hex;
+      btn.title = key;
+
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this.selectedColorKey = key;
+        this.selectedColorHex = hex;
+        // Re-render icon picker colors dynamically
+        this.buildIconPicker();
+      });
+
+      row.appendChild(btn);
+    });
+  },
+
+  buildIconPicker() {
+    const picker = document.getElementById('icon-picker-grid');
+    if (!picker) return;
+
+    picker.innerHTML = '';
+
+    ICON_LIST.forEach(iconName => {
+      const btn = document.createElement('button');
+      btn.className = 'icon-option-btn' + (iconName === this.selectedIcon ? ' selected' : '');
+      btn.innerHTML = getIconSVG(iconName, this.selectedColorHex, 20);
+
+      btn.addEventListener('click', () => {
+        picker.querySelectorAll('.icon-option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this.selectedIcon = iconName;
+      });
+
+      picker.appendChild(btn);
+    });
+  },
+
+  openNewPageSheet() {
+    document.getElementById('new-page-title-input').value = '';
+    this.openSheet('sheet-new-page');
+  },
+
+  async createNewPage() {
+    const titleInput = document.getElementById('new-page-title-input');
+    const title = titleInput.value.trim();
+
+    if (!title) {
+      showToast('Please enter a page title');
+      return;
+    }
+
+    const newPage = {
+      id: generateId(),
+      name: title,
+      icon: this.selectedIcon,
+      iconColor: this.selectedColorHex,
+      cover: null,
+      parentId: null,
+      type: 'normal',
+      order: Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    await DB.savePage(newPage);
+    showToast('Page created');
+    this.closeAllSheets();
+    await this.renderPages();
+  },
+
+  openOptionsSheet(page) {
+    this.targetPageId = page.id;
+    document.getElementById('options-sheet-title').textContent = page.name;
+    this.openSheet('sheet-page-options');
+  },
+
+  openRenameSheet() {
+    this.closeAllSheets();
+    const input = document.getElementById('rename-page-input');
+    input.value = '';
+    this.openSheet('sheet-rename-page');
+  },
+
+  async saveRenamePage() {
+    const input = document.getElementById('rename-page-input');
+    const newName = input.value.trim();
+
+    if (!newName || !this.targetPageId) {
+      showToast('Please enter a valid title');
+      return;
+    }
+
+    const page = await DB.getPage(this.targetPageId);
+    if (page) {
+      page.name = newName;
+      await DB.savePage(page);
+      showToast('Page renamed');
+      this.closeAllSheets();
+      await this.renderPages();
+    }
+  },
+
+  async confirmDeletePage() {
+    if (!this.targetPageId) return;
+
+    if (confirm('Are you sure you want to delete this page and all its contents?')) {
+      await DB.deletePage(this.targetPageId);
+      showToast('Page deleted');
+      this.closeAllSheets();
+      await this.renderPages();
+    }
+  },
+
+  openSheet(sheetId) {
+    document.getElementById('sheet-backdrop').classList.add('visible');
+    document.getElementById(sheetId).classList.add('visible');
+  },
+
+  closeAllSheets() {
+    document.getElementById('sheet-backdrop').classList.remove('visible');
+    document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('visible'));
+  }
+};
+
+// Re-render pages grid on screen view
+document.addEventListener('DOMContentLoaded', () => {
+  PagesController.init();
+});
+
+    // === JS-5: Page View Controller ===
+/* ==========================================
+   PAGE VIEW CONTROLLER (COVER, TITLE, BREADCRUMBS)
+   ========================================== */
+const PageViewController = {
+  currentPage: null,
+  selectedIcon: 'page',
+  selectedColorKey: 'violet',
+  selectedColorHex: '#a78bfa',
+
+  async loadPage(pageId) {
+    if (!pageId) return;
+
+    const page = await DB.getPage(pageId);
+    if (!page) {
+      showToast('Page not found');
+      ScreenManager.pop();
+      return;
+    }
+
+    this.currentPage = page;
+    this.selectedIcon = page.icon || 'page';
+    this.selectedColorHex = page.iconColor || '#a78bfa';
+
+    // Update Header Bar Title
+    document.getElementById('page-view-header-title').textContent = page.name || 'Untitled';
+
+    // Render Cover
+    this.renderCover();
+
+    // Render Icon
+    this.renderIcon();
+
+    // Render Breadcrumbs
+    await this.renderBreadcrumbs();
+
+    // Render Title
+    const titleElem = document.getElementById('page-title-editable');
+    titleElem.textContent = page.name || '';
+
+    // Bind Title Auto-Save
+    this.bindTitleAutoSave(titleElem);
+  },
+
+  renderCover() {
+    const coverImg = document.getElementById('page-cover-img');
+    const btnText = document.getElementById('cover-btn-text');
+    const removeBtn = document.getElementById('btn-remove-cover');
+
+    if (this.currentPage && this.currentPage.cover) {
+      coverImg.src = this.currentPage.cover;
+      coverImg.style.display = 'block';
+      btnText.textContent = 'Change Cover';
+      if (removeBtn) removeBtn.style.display = 'flex';
+    } else {
+      coverImg.src = '';
+      coverImg.style.display = 'none';
+      btnText.textContent = 'Add Cover';
+      if (removeBtn) removeBtn.style.display = 'none';
+    }
+  },
+
+  renderIcon() {
+    const iconContainer = document.getElementById('page-icon-svg');
+    if (iconContainer && this.currentPage) {
+      iconContainer.innerHTML = getIconSVG(
+        this.currentPage.icon || 'page',
+        this.currentPage.iconColor || '#a78bfa',
+        28
+      );
+    }
+  },
+
+  async renderBreadcrumbs() {
+    const container = document.getElementById('breadcrumbs-container');
+    if (!container || !this.currentPage) return;
+
+    const crumbs = [];
+    let curr = this.currentPage;
+
+    // Traverse ancestors
+    while (curr) {
+      crumbs.unshift(curr);
+      if (curr.parentId) {
+        curr = await DB.getPage(curr.parentId);
+      } else {
+        curr = null;
+      }
+    }
+
+    let html = `<span class="breadcrumb-crumb" onclick="ScreenManager.push('screen-pages')">Pages</span>`;
+
+    crumbs.forEach((crumb, index) => {
+      html += `<span class="breadcrumb-separator">/</span>`;
+      const isLast = index === crumbs.length - 1;
+      if (isLast) {
+        html += `<span class="breadcrumb-crumb active">${crumb.name || 'Untitled'}</span>`;
+      } else {
+        html += `<span class="breadcrumb-crumb" onclick="ScreenManager.push('screen-page-view', { pageId: '${crumb.id}' })">${crumb.name || 'Untitled'}</span>`;
+      }
+    });
+
+    container.innerHTML = html;
+  },
+
+  bindTitleAutoSave(elem) {
+    let saveTimeout = null;
+
+    elem.oninput = () => {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        const newTitle = elem.textContent.trim();
+        if (this.currentPage && newTitle !== this.currentPage.name) {
+          this.currentPage.name = newTitle || 'Untitled Page';
+          await DB.savePage(this.currentPage);
+          document.getElementById('page-view-header-title').textContent = this.currentPage.name;
+          await this.renderBreadcrumbs();
+          PagesController.renderPages();
+        }
+      }, 400);
+    };
+  },
+
+  openCoverSheet() {
+    PagesController.openSheet('sheet-cover-options');
+  },
+
+  handleCoverUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image size must be under 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64Img = e.target.result;
+      if (this.currentPage) {
+        this.currentPage.cover = base64Img;
+        await DB.savePage(this.currentPage);
+        this.renderCover();
+        showToast('Cover updated');
+        PagesController.closeAllSheets();
+      }
+    };
+    reader.readAsDataURL(file);
+  },
+
+  async removeCover() {
+    if (this.currentPage) {
+      this.currentPage.cover = null;
+      await DB.savePage(this.currentPage);
+      this.renderCover();
+      showToast('Cover removed');
+      PagesController.closeAllSheets();
+    }
+  },
+
+  openIconSheet() {
+    this.buildPageColorSwatches();
+    this.buildPageIconPicker();
+    PagesController.openSheet('sheet-change-icon');
+  },
+
+  buildPageColorSwatches() {
+    const row = document.getElementById('page-color-swatch-row');
+    if (!row) return;
+
+    row.innerHTML = '';
+    Object.entries(ICON_COLORS).forEach(([key, hex]) => {
+      const btn = document.createElement('button');
+      btn.className = 'swatch-btn' + (hex === this.selectedColorHex ? ' selected' : '');
+      btn.style.backgroundColor = hex;
+
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this.selectedColorHex = hex;
+        this.buildPageIconPicker();
+      });
+
+      row.appendChild(btn);
+    });
+  },
+
+  buildPageIconPicker() {
+    const picker = document.getElementById('page-icon-picker-grid');
+    if (!picker) return;
+
+    picker.innerHTML = '';
+    ICON_LIST.forEach(iconName => {
+      const btn = document.createElement('button');
+      btn.className = 'icon-option-btn' + (iconName === this.selectedIcon ? ' selected' : '');
+      btn.innerHTML = getIconSVG(iconName, this.selectedColorHex, 20);
+
+      btn.addEventListener('click', () => {
+        picker.querySelectorAll('.icon-option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this.selectedIcon = iconName;
+      });
+
+      picker.appendChild(btn);
+    });
+  },
+
+  async saveIconAndColor() {
+    if (this.currentPage) {
+      this.currentPage.icon = this.selectedIcon;
+      this.currentPage.iconColor = this.selectedColorHex;
+      await DB.savePage(this.currentPage);
+      this.renderIcon();
+      showToast('Icon updated');
+      PagesController.closeAllSheets();
+      PagesController.renderPages();
+    }
+  }
+};
+
+// Hook ScreenManager push to trigger PageViewController
+const _originalPush = ScreenManager.push.bind(ScreenManager);
+ScreenManager.push = function(screenId, params = {}) {
+  _originalPush(screenId, params);
+  if (screenId === 'screen-page-view' && params.pageId) {
+    PageViewController.loadPage(params.pageId);
+  }
+};
+
+    // === JS-6: Layer 1 Block Renderer & Controllers ===
+/* ==========================================
+   LAYER 1 BLOCK ENGINE
+   ========================================== */
+const BLOCK_TYPES = [
+  { type: 'text', name: 'Text', icon: 'pen' },
+  { type: 'h1', name: 'Heading 1', icon: 'page' },
+  { type: 'h2', name: 'Heading 2', icon: 'page' },
+  { type: 'h3', name: 'Heading 3', icon: 'page' },
+  { type: 'bullet-list', name: 'Bullet List', icon: 'list' },
+  { type: 'numbered-list', name: 'Numbered List', icon: 'list' },
+  { type: 'to-do', name: 'To-Do', icon: 'check' },
+  { type: 'quote', name: 'Quote', icon: 'feather' },
+  { type: 'callout', name: 'Callout', icon: 'lightbulb' },
+  { type: 'divider', name: 'Divider', icon: 'code' },
+  { type: 'image', name: 'Image', icon: 'camera' },
+  { type: 'sub-page', name: 'Sub-Page', icon: 'link' },
+  { type: 'link-to-page', name: 'Page Link', icon: 'bookmark' },
+  { type: 'post', name: 'Post Card', icon: 'sparkles' }
+];
+
+const BlockEngine = {
+  activeBlocks: [],
+  targetBlockId: null,
+
+  async loadBlocks(pageId) {
+    const container = document.getElementById('blocks-container');
+    if (!container) return;
+
+    this.activeBlocks = await DB.getBlocks(pageId);
+    container.innerHTML = '';
+
+    if (this.activeBlocks.length === 0) {
+      container.innerHTML = `
+        <div class="placeholder-box" style="min-height: 140px; margin-top: 12px;" onclick="BlockEngine.openAddBlockSheet()">
+          ${getIconSVG('plus', '#a78bfa', 28)}
+          <p style="font-size: 13px;">Tap + to add your first block</p>
+        </div>
+      `;
+      return;
+    }
+
+    let listNumber = 1;
+
+    for (let i = 0; i < this.activeBlocks.length; i++) {
+      const block = this.activeBlocks[i];
+      if (block.type === 'numbered-list') {
+        block._numIndex = listNumber++;
+      } else {
+        listNumber = 1;
+      }
+      const elem = await this.renderBlockElement(block);
+      container.appendChild(elem);
+    }
+  },
+
+  async renderBlockElement(block) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'block-wrapper';
+    wrapper.dataset.id = block.id;
+
+    // Action Options Trigger
+    const triggerBtn = document.createElement('button');
+    triggerBtn.className = 'block-actions-trigger';
+    triggerBtn.innerHTML = getIconSVG('more-vertical', '#7b7b8f', 16);
+    triggerBtn.onclick = () => this.openBlockOptions(block.id);
+
+    const contentArea = document.createElement('div');
+    contentArea.className = 'block-content-area';
+
+    switch (block.type) {
+      case 'h1':
+      case 'h2':
+      case 'h3':
+      case 'text':
+        contentArea.appendChild(this.createEditableText(block, `block-${block.type}`));
+        break;
+
+      case 'bullet-list': {
+        const row = document.createElement('div');
+        row.className = 'block-bullet-list';
+        row.innerHTML = `<span class="bullet-prefix">•</span>`;
+        row.appendChild(this.createEditableText(block, 'block-text'));
+        contentArea.appendChild(row);
+        break;
+      }
+
+      case 'numbered-list': {
+        const row = document.createElement('div');
+        row.className = 'block-numbered-list';
+        row.innerHTML = `<span class="number-prefix">${block._numIndex || 1}.</span>`;
+        row.appendChild(this.createEditableText(block, 'block-text'));
+        contentArea.appendChild(row);
+        break;
+      }
+
+      case 'to-do': {
+        const row = document.createElement('div');
+        const isChecked = block.meta && block.meta.checked;
+        row.className = `block-todo ${isChecked ? 'checked' : ''}`;
+        
+        const box = document.createElement('div');
+        box.className = `todo-checkbox ${isChecked ? 'checked' : ''}`;
+        if (isChecked) box.innerHTML = getIconSVG('check', '#0d0d0f', 14);
+
+        box.onclick = async () => {
+          block.meta = block.meta || {};
+          block.meta.checked = !block.meta.checked;
+          await DB.saveBlock(block);
+          this.loadBlocks(block.pageId);
+        };
+
+        row.appendChild(box);
+        row.appendChild(this.createEditableText(block, 'block-text'));
+        contentArea.appendChild(row);
+        break;
+      }
+
+      case 'quote': {
+        const quote = document.createElement('div');
+        quote.className = 'block-quote';
+        quote.appendChild(this.createEditableText(block, 'block-text'));
+        contentArea.appendChild(quote);
+        break;
+      }
+
+      case 'callout': {
+        const card = document.createElement('div');
+        card.className = 'block-callout';
+        const iconName = (block.meta && block.meta.icon) || 'lightbulb';
+        card.innerHTML = `<div class="callout-icon">${getIconSVG(iconName, '#a78bfa', 20)}</div>`;
+        card.appendChild(this.createEditableText(block, 'block-text'));
+        contentArea.appendChild(card);
+        break;
+      }
+
+      case 'divider': {
+        const hr = document.createElement('hr');
+        hr.className = 'block-divider';
+        contentArea.appendChild(hr);
+        break;
+      }
+
+      case 'image': {
+        const card = document.createElement('div');
+        card.className = 'block-image-card';
+        if (block.content) {
+          card.innerHTML = `<img src="${block.content}" alt="Block Image">`;
+        } else {
+          card.innerHTML = `
+            <div style="padding: 24px; text-align: center; cursor: pointer;" onclick="BlockEngine.triggerImageUpload('${block.id}')">
+              ${getIconSVG('camera', '#a78bfa', 28)}
+              <p style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">Tap to upload image</p>
+            </div>
+          `;
+        }
+        contentArea.appendChild(card);
+        break;
+      }
+
+      case 'sub-page': {
+        const card = document.createElement('div');
+        card.className = 'block-page-link-card';
+        const subPageTitle = (block.meta && block.meta.title) || 'Sub-Page';
+        card.innerHTML = `
+          ${getIconSVG('page', '#7ba7d4', 20)}
+          <span class="page-link-title">${subPageTitle}</span>
+        `;
+        card.onclick = () => {
+          if (block.meta && block.meta.subPageId) {
+            ScreenManager.push('screen-page-view', { pageId: block.meta.subPageId });
+          }
+        };
+        contentArea.appendChild(card);
+        break;
+      }
+
+      case 'post': {
+        const card = document.createElement('div');
+        card.className = 'block-post-card';
+        card.innerHTML = `
+          <div class="post-badge">${getIconSVG('sparkles', '#a78bfa', 12)} Feed Post</div>
+        `;
+        card.appendChild(this.createEditableText(block, 'block-text'));
+        contentArea.appendChild(card);
+        break;
+      }
+
+      default:
+        contentArea.appendChild(this.createEditableText(block, 'block-text'));
+    }
+
+    wrapper.appendChild(contentArea);
+    wrapper.appendChild(triggerBtn);
+    return wrapper;
+  },
+
+  createEditableText(block, className) {
+    const div = document.createElement('div');
+    div.className = `${className} rich-editable`;
+    div.contentEditable = "true";
+    div.spellcheck = false;
+    div.innerHTML = block.content || '';
+    div.setAttribute('data-placeholder', 'Type something...');
+
+    let saveTimeout = null;
+    div.oninput = () => {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        block.content = div.innerHTML;
+        await DB.saveBlock(block);
+      }, 400);
+    };
+
+    return div;
+  },
+
+  openAddBlockSheet() {
+    const grid = document.getElementById('block-type-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    BLOCK_TYPES.forEach(bt => {
+      const item = document.createElement('div');
+      item.className = 'block-type-item';
+      item.innerHTML = `
+        ${getIconSVG(bt.icon, '#a78bfa', 20)}
+        <span class="block-type-title">${bt.name}</span>
+      `;
+      item.onclick = () => {
+        this.addBlock(bt.type);
+        PagesController.closeAllSheets();
+      };
+      grid.appendChild(item);
+    });
+
+    PagesController.openSheet('sheet-add-block');
+  },
+
+  async addBlock(type) {
+    if (!PageViewController.currentPage) return;
+
+    const pageId = PageViewController.currentPage.id;
+    const now = Date.now();
+
+    const newBlock = {
+      id: generateId(),
+      pageId: pageId,
+      parentId: null,
+      type: type,
+      content: '',
+      order: now,
+      meta: {},
+      createdAt: now,
+      updatedAt: now
+    };
+
+    // If sub-page, create sub page in database
+    if (type === 'sub-page') {
+      const subPage = {
+        id: generateId(),
+        name: 'Untitled Sub-Page',
+        icon: 'page',
+        iconColor: '#7ba7d4',
+        cover: null,
+        parentId: pageId,
+        type: 'normal',
+        order: now,
+        createdAt: now,
+        updatedAt: now
+      };
+      await DB.savePage(subPage);
+      newBlock.meta = { subPageId: subPage.id, title: subPage.name };
+    }
+
+    await DB.saveBlock(newBlock);
+    await this.loadBlocks(pageId);
+    showToast('Block added');
+  },
+
+  openBlockOptions(blockId) {
+    this.targetBlockId = blockId;
+    PagesController.openSheet('sheet-block-options');
+  },
+
+  async moveTargetBlock(dir) {
+    if (!this.targetBlockId) return;
+    const idx = this.activeBlocks.findIndex(b => b.id === this.targetBlockId);
+    if (idx === -1) return;
+
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= this.activeBlocks.length) return;
+
+    // Swap orders
+    const tempOrder = this.activeBlocks[idx].order;
+    this.activeBlocks[idx].order = this.activeBlocks[newIdx].order;
+    this.activeBlocks[newIdx].order = tempOrder;
+
+    await DB.saveBlocks([this.activeBlocks[idx], this.activeBlocks[newIdx]]);
+    PagesController.closeAllSheets();
+    this.loadBlocks(PageViewController.currentPage.id);
+  },
+
+  async deleteTargetBlock() {
+    if (!this.targetBlockId) return;
+    await DB.deleteBlock(this.targetBlockId);
+    PagesController.closeAllSheets();
+    this.loadBlocks(PageViewController.currentPage.id);
+    showToast('Block deleted');
+  },
+
+  triggerImageUpload(blockId) {
+    this.targetBlockId = blockId;
+    document.getElementById('block-image-file-input').click();
+  },
+
+  handleImageBlockUpload(event) {
+    const file = event.target.files[0];
+    if (!file || !this.targetBlockId) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target.result;
+      const block = this.activeBlocks.find(b => b.id === this.targetBlockId);
+      if (block) {
+        block.content = base64;
+        await DB.saveBlock(block);
+        this.loadBlocks(PageViewController.currentPage.id);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+// Hook PageViewController.loadPage to also load blocks
+const _originalLoadPage = PageViewController.loadPage.bind(PageViewController);
+PageViewController.loadPage = async function(pageId) {
+  await _originalLoadPage(pageId);
+  await BlockEngine.loadBlocks(pageId);
+};
+
+    // === JS-7: Sub-Page & Drag-to-Reorder Handler ===
+/* ==========================================
+   TOUCH DRAG-AND-DROP REORDER ENGINE
+   ========================================== */
+const DragEngine = {
+  draggingElem: null,
+
+  attach(handle, wrapper) {
+    if (!handle || !wrapper) return;
+
+    const start = (e) => {
+      // Prevent scrolling while dragging
+      if (e.type === 'touchstart') e.preventDefault();
+      
+      this.draggingElem = wrapper;
+      wrapper.classList.add('dragging');
+
+      const moveHandler = (evt) => this.onMove(evt);
+      const endHandler = (evt) => this.onEnd(evt, moveHandler, endHandler);
+
+      document.addEventListener('touchmove', moveHandler, { passive: false });
+      document.addEventListener('touchend', endHandler);
+      document.addEventListener('mousemove', moveHandler);
+      document.addEventListener('mouseup', endHandler);
+    };
+
+    handle.addEventListener('touchstart', start, { passive: false });
+    handle.addEventListener('mousedown', start);
+  },
+
+  onMove(e) {
+    if (!this.draggingElem) return;
+    if (e.cancelable) e.preventDefault();
+
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const container = document.getElementById('blocks-container');
+    if (!container) return;
+
+    const siblings = [...container.querySelectorAll('.block-wrapper:not(.dragging)')];
+
+    const nextSibling = siblings.find(sibling => {
+      const box = sibling.getBoundingClientRect();
+      return clientY < box.top + box.height / 2;
+    });
+
+    if (nextSibling) {
+      container.insertBefore(this.draggingElem, nextSibling);
+    } else {
+      container.appendChild(this.draggingElem);
+    }
+  },
+
+  async onEnd(e, moveHandler, endHandler) {
+    if (!this.draggingElem) return;
+
+    this.draggingElem.classList.remove('dragging');
+    this.draggingElem = null;
+
+    document.removeEventListener('touchmove', moveHandler);
+    document.removeEventListener('touchend', endHandler);
+    document.removeEventListener('mousemove', moveHandler);
+    document.removeEventListener('mouseup', endHandler);
+
+    // Save recalculated block orders to IndexedDB
+    await this.saveNewBlockOrder();
+  },
+
+  async saveNewBlockOrder() {
+    const container = document.getElementById('blocks-container');
+    if (!container) return;
+
+    const wrappers = container.querySelectorAll('.block-wrapper');
+    const baseTime = Date.now();
+    const updatedBlocks = [];
+
+    wrappers.forEach((wrap, index) => {
+      const blockId = wrap.dataset.id;
+      const block = BlockEngine.activeBlocks.find(b => b.id === blockId);
+      if (block) {
+        block.order = baseTime + (index * 10);
+        updatedBlocks.push(block);
+      }
+    });
+
+    if (updatedBlocks.length > 0) {
+      await DB.saveBlocks(updatedBlocks);
+      BlockEngine.activeBlocks = updatedBlocks;
+      showToast('Block order updated');
+    }
+  }
+};
+
+/* ==========================================
+   UPDATE BLOCK ENGINE TO INCLUDE DRAG HANDLE
+   ========================================== */
+const _originalRenderBlockElement = BlockEngine.renderBlockElement.bind(BlockEngine);
+BlockEngine.renderBlockElement = async function(block) {
+  const wrapper = await _originalRenderBlockElement(block);
+
+  // Add Drag Grip Handle
+  const handle = document.createElement('div');
+  handle.className = 'drag-handle';
+  handle.title = 'Drag to reorder';
+  handle.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>`;
+
+  wrapper.insertBefore(handle, wrapper.firstChild);
+
+  // Attach Drag Engine to handle
+  DragEngine.attach(handle, wrapper);
+
+  return wrapper;
+};
+
+/* ==========================================
+   SUB-PAGE NAVIGATION TITLE SYNC
+   ========================================== */
+// Automatically sync sub-page title changes back to parent sub-page block
+const _originalSavePage = DB.savePage.bind(DB);
+DB.savePage = async function(page) {
+  const result = await _originalSavePage(page);
+  if (page.parentId) {
+    // Find sub-page block in parent page and update its meta title
+    const parentBlocks = await DB.getBlocks(page.parentId);
+    const subPageBlock = parentBlocks.find(b => b.type === 'sub-page' && b.meta && b.meta.subPageId === page.id);
+    if (subPageBlock) {
+      subPageBlock.meta.title = page.name || 'Untitled Sub-Page';
+      await DB.saveBlock(subPageBlock);
+    }
+  }
+  return result;
+};
+
+    // === JS-8: Search Engine ===
+/* ==========================================
+   FULL-TEXT SEARCH ENGINE (VAULT EXCLUDED)
+   ========================================== */
+const SearchEngine = {
+  debounceTimer: null,
+
+  init() {
+    // Hook into ScreenManager to auto-focus search input when screen opens
+    const _originalPush = ScreenManager.push.bind(ScreenManager);
+    ScreenManager.push = function(screenId, params = {}) {
+      _originalPush(screenId, params);
+      if (screenId === 'screen-search') {
+        setTimeout(() => {
+          const input = document.getElementById('search-input');
+          if (input) input.focus();
+        }, 300);
+      }
+    };
+  },
+
+  onInput(event) {
+    const query = event.target.value;
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) {
+      clearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+    }
+
+    clearTimeout(this.debounceTimer);
+    this.debounceTimer = setTimeout(() => {
+      this.performSearch(query);
+    }, 200);
+  },
+
+  clearSearch() {
+    const input = document.getElementById('search-input');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    this.performSearch('');
+  },
+
+  async performSearch(query) {
+    const resultsList = document.getElementById('search-results-list');
+    if (!resultsList) return;
+
+    const q = query.trim().toLowerCase();
+
+    if (!q) {
+      resultsList.innerHTML = `
+        <div class="placeholder-box" style="min-height: 200px;">
+          ${getIconSVG('search', '#7b7b8f', 32)}
+          <p>Type keywords to search across your pages</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Fetch all pages and blocks
+    const allPages = await DB.getPages();
+    // STRICT VAULT ISOLATION: Filter out vault pages completely
+    const validPages = allPages.filter(p => p.type !== 'vault');
+    const validPageIds = new Set(validPages.map(p => p.id));
+
+    const matches = [];
+
+    // 1. Match Page Titles
+    validPages.forEach(page => {
+      if (page.name.toLowerCase().includes(q)) {
+        matches.push({
+          pageId: page.id,
+          pageName: page.name,
+          icon: page.icon || 'page',
+          iconColor: page.iconColor || '#a78bfa',
+          snippet: `Page Title matches "${q}"`,
+          isTitleMatch: true
+        });
+      }
+    });
+
+    // 2. Match Block Content (Plain text stripped of HTML)
+    for (const page of validPages) {
+      const blocks = await DB.getBlocks(page.id);
+      blocks.forEach(block => {
+        if (!block.content) return;
+        const plainText = this.stripHTML(block.content);
+        if (plainText.toLowerCase().includes(q)) {
+          // Avoid duplicate entry if title already matched
+          const snippet = this.extractSnippet(plainText, q);
+          matches.push({
+            pageId: page.id,
+            pageName: page.name,
+            icon: page.icon || 'page',
+            iconColor: page.iconColor || '#a78bfa',
+            snippet: snippet,
+            isTitleMatch: false
+          });
+        }
+      });
+    }
+
+    // Render Search Results
+    if (matches.length === 0) {
+      resultsList.innerHTML = `
+        <div class="placeholder-box" style="min-height: 200px;">
+          ${getIconSVG('search', '#c4a05a', 32)}
+          <p>No results found for "${query}"</p>
+        </div>
+      `;
+      return;
+    }
+
+    resultsList.innerHTML = '';
+    matches.forEach(match => {
+      const card = document.createElement('div');
+      card.className = 'search-result-card';
+      card.innerHTML = `
+        <div class="search-result-header">
+          ${getIconSVG(match.icon, match.iconColor, 18)}
+          <span class="search-result-title">${match.pageName}</span>
+        </div>
+        <div class="search-result-snippet">${match.snippet}</div>
+      `;
+      card.onclick = () => {
+        ScreenManager.push('screen-page-view', { pageId: match.pageId });
+      };
+      resultsList.appendChild(card);
+    });
+  },
+
+  stripHTML(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  },
+
+  extractSnippet(text, query, maxLen = 80) {
+    const lower = text.toLowerCase();
+    const idx = lower.indexOf(query.toLowerCase());
+    if (idx === -1) return text.substring(0, maxLen);
+
+    const start = Math.max(0, idx - 20);
+    const end = Math.min(text.length, idx + query.length + 45);
+    let snippet = (start > 0 ? '...' : '') + text.substring(start, end) + (end < text.length ? '...' : '');
+
+    // Highlight search match
+    const escapedQ = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQ})`, 'gi');
+    return snippet.replace(regex, '<mark class="search-highlight">$1</mark>');
+  }
+};
+
+// Initialize Search Engine
+document.addEventListener('DOMContentLoaded', () => {
+  SearchEngine.init();
+});
+
+    // === JS-9: Feed Engine & Midnight Rotation ===
+/* ==========================================
+   HOME FEED ENGINE & DAILY ROTATOR
+   ========================================== */
+const FeedEngine = {
+  async init() {
+    await this.loadFeed();
+
+    // Re-render feed whenever returning to Home Screen
+    const _originalPush = ScreenManager.push.bind(ScreenManager);
+    ScreenManager.push = function(screenId, params = {}) {
+      _originalPush(screenId, params);
+      if (screenId === 'screen-home') {
+        FeedEngine.loadFeed();
+      }
+    };
+  },
+
+  getTodayString() {
+    const d = new Date();
+    return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+  },
+
+  getDayIndex() {
+    // Number of days since Epoch (advances at real midnight UTC/local)
+    const now = new Date();
+    return Math.floor(now.getTime() / 86400000);
+  },
+
+  async loadFeed() {
+    const container = document.getElementById('feed-container');
+    if (!container) return;
+
+    const todayStr = this.getTodayString();
+    const dayIndex = this.getDayIndex();
+
+    // 1. Fetch all non-vault pages
+    const allPages = await DB.getPages();
+    const validPages = allPages.filter(p => p.type !== 'vault');
+
+    // 2. Collect pages that have at least one 'post' block
+    const eligiblePages = [];
+
+    for (const page of validPages) {
+      const blocks = await DB.getBlocks(page.id);
+      const postBlocks = blocks.filter(b => b.type === 'post');
+
+      if (postBlocks.length > 0) {
+        // Today's rotated post selection logic (advances at midnight, skips missed days)
+        const activePostIndex = dayIndex % postBlocks.length;
+        const todaysPost = postBlocks[activePostIndex];
+
+        eligiblePages.push({
+          page: page,
+          post: todaysPost
+        });
+      }
+    }
+
+    if (eligiblePages.length === 0) {
+      container.innerHTML = `
+        <div class="placeholder-box" style="min-height: 220px;">
+          ${getIconSVG('sparkles', '#a78bfa', 32)}
+          <p>No feed posts yet.<br><span style="color:var(--text-secondary); font-weight:400; font-size:13px;">Add a "Post Card" block to any page to see it appear here.</span></p>
+        </div>
+      `;
+      return;
+    }
+
+    // 3. Daily Date-Seeded Shuffle Engine
+    let savedSeedDate = await DB.getSetting('feedSeedDate');
+    let savedOrder = await DB.getSetting('feedOrder');
+
+    let finalOrderedPages = [];
+
+    if (savedSeedDate === todayStr && Array.isArray(savedOrder)) {
+      // Use saved daily shuffle order
+      const pageMap = new Map(eligiblePages.map(item => [item.page.id, item]));
+      savedOrder.forEach(id => {
+        if (pageMap.has(id)) {
+          finalOrderedPages.push(pageMap.get(id));
+          pageMap.delete(id);
+        }
+      });
+      // Append any newly added post pages
+      pageMap.forEach(item => finalOrderedPages.push(item));
+    } else {
+      // Reshuffle using date seed and save
+      finalOrderedPages = this.seededShuffle(eligiblePages, todayStr);
+      const newOrderIds = finalOrderedPages.map(item => item.page.id);
+      await DB.saveSetting('feedSeedDate', todayStr);
+      await DB.saveSetting('feedOrder', newOrderIds);
+    }
+
+    // 4. Render Feed Cards
+    container.innerHTML = '';
+    finalOrderedPages.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'feed-card';
+
+      card.innerHTML = `
+        <div class="feed-card-header" onclick="ScreenManager.push('screen-page-view', { pageId: '${item.page.id}' })">
+          <div class="feed-card-icon">
+            ${getIconSVG(item.page.icon || 'page', item.page.iconColor || '#a78bfa', 20)}
+          </div>
+          <div class="feed-card-title">${item.page.name}</div>
+        </div>
+        <div class="feed-card-body">${item.post.content || '<em style="color:var(--text-secondary)">Empty post</em>'}</div>
+      `;
+
+      container.appendChild(card);
+    });
+  },
+
+  seededShuffle(array, seedStr) {
+    // Generate deterministic pseudo-random hash from date string
+    let hash = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = Math.imul(31, hash) + seedStr.charCodeAt(i) | 0;
+    }
+
+    const random = () => {
+      let t = hash += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 8, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+};
+
+// Initialize Feed Engine on DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+  FeedEngine.init();
+});
+
+    // === JS-10: Vault Engine (AES-GCM Crypto & PIN Handler) ===
+/* ==========================================
+   ENCRYPTED VAULT & WEB CRYPTO ENGINE (AES-GCM)
+   ========================================== */
+const VaultEngine = {
+  activeKey: null,
+  pinInput: '',
+  isSetupMode: false,
+  vaultPage: null,
+
+  async init() {
+    const _originalPush = ScreenManager.push.bind(ScreenManager);
+    ScreenManager.push = function(screenId, params = {}) {
+      _originalPush(screenId, params);
+      if (screenId === 'screen-vault') {
+        VaultEngine.onVaultScreenOpened();
+      }
+    };
+  },
+
+  async onVaultScreenOpened() {
+    this.pinInput = '';
+    this.updateDots();
+
+    const vaultHash = await DB.getSetting('vaultHash');
+    const titleElem = document.getElementById('pin-screen-title');
+    const subtitleElem = document.getElementById('pin-screen-subtitle');
+
+    if (!vaultHash) {
+      this.isSetupMode = true;
+      if (titleElem) titleElem.textContent = 'Set Vault PIN';
+      if (subtitleElem) subtitleElem.textContent = 'Choose a 4-digit PIN to secure your vault';
+    } else {
+      this.isSetupMode = false;
+      if (titleElem) titleElem.textContent = 'Enter Vault PIN';
+      if (subtitleElem) subtitleElem.textContent = 'Your encrypted personal storage';
+    }
+
+    if (!this.activeKey) {
+      this.showPinView();
+    } else {
+      this.showUnlockedView();
+    }
+  },
+
+  pressKey(digit) {
+    if (this.pinInput.length < 4) {
+      this.pinInput += digit;
+      this.updateDots();
+
+      if (this.pinInput.length === 4) {
+        setTimeout(() => this.submitPin(), 100);
+      }
+    }
+  },
+
+  clearPin() {
+    this.pinInput = '';
+    this.updateDots();
+  },
+
+  backspacePin() {
+    if (this.pinInput.length > 0) {
+      this.pinInput = this.pinInput.slice(0, -1);
+      this.updateDots();
+    }
+  },
+
+  updateDots() {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById(`dot-${i}`);
+      if (dot) {
+        if (i < this.pinInput.length) {
+          dot.classList.add('filled');
+        } else {
+          dot.classList.remove('filled');
+        }
+      }
+    }
+  },
+
+  async submitPin() {
+    const pin = this.pinInput;
+    const pinHash = await this.hashText(pin);
+
+    if (this.isSetupMode) {
+      // Setup initial PIN
+      let salt = generateId() + generateId();
+      await DB.saveSetting('vaultSalt', salt);
+      await DB.saveSetting('vaultHash', pinHash);
+
+      this.activeKey = await this.deriveCryptoKey(pin, salt);
+      showToast('PIN set successfully');
+      this.showUnlockedView();
+    } else {
+      // Validate PIN
+      const storedHash = await DB.getSetting('vaultHash');
+      if (pinHash === storedHash) {
+        const salt = await DB.getSetting('vaultSalt');
+        this.activeKey = await this.deriveCryptoKey(pin, salt);
+        showToast('Vault unlocked');
+        this.showUnlockedView();
+      } else {
+        showToast('Incorrect PIN');
+        this.clearPin();
+      }
+    }
+  },
+
+  async showUnlockedView() {
+    document.getElementById('vault-pin-view').style.display = 'none';
+    document.getElementById('vault-content-view').style.display = 'block';
+    document.getElementById('vault-fab').style.display = 'flex';
+
+    // Inject Re-Lock Button in Top Bar
+    const rightBar = document.getElementById('vault-top-bar-right');
+    if (rightBar) {
+      rightBar.innerHTML = `
+        <button class="icon-btn" onclick="VaultEngine.lockVault()" title="Lock Vault">
+          ${getIconSVG('lock', '#d48b9a', 20)}
+        </button>
+      `;
+    }
+
+    await this.renderVaultBlocks();
+  },
+
+  showPinView() {
+    document.getElementById('vault-pin-view').style.display = 'flex';
+    document.getElementById('vault-content-view').style.display = 'none';
+    document.getElementById('vault-fab').style.display = 'none';
+
+    const rightBar = document.getElementById('vault-top-bar-right');
+    if (rightBar) rightBar.innerHTML = '';
+  },
+
+  lockVault() {
+    this.activeKey = null;
+    this.pinInput = '';
+    this.showPinView();
+    showToast('Vault locked');
+  },
+
+  /* --- CRYPTO HELPER METHODS --- */
+  async hashText(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const buffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  async deriveCryptoKey(pin, salt) {
+    const encoder = new TextEncoder();
+    const pinData = encoder.encode(pin);
+    const saltData = encoder.encode(salt);
+
+    const baseKey = await crypto.subtle.importKey(
+      'raw',
+      pinData,
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
+
+    return crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: saltData,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      baseKey,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  },
+
+  async encryptPayload(plainText) {
+    if (!this.activeKey) return plainText;
+    const encoder = new TextEncoder();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encryptedBuffer = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: iv },
+      this.activeKey,
+      encoder.encode(plainText)
+    );
+
+    const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
+    const cipherBase64 = btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)));
+    return JSON.stringify({ iv: ivHex, data: cipherBase64, isEncrypted: true });
+  },
+
+  async decryptPayload(payloadStr) {
+    if (!this.activeKey || !payloadStr) return payloadStr;
+    try {
+      const payload = JSON.parse(payloadStr);
+      if (!payload.isEncrypted || !payload.iv || !payload.data) return payloadStr;
+
+      const iv = new Uint8Array(payload.iv.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+      const encryptedData = new Uint8Array(atob(payload.data).split('').map(c => c.charCodeAt(0)));
+
+      const decryptedBuffer = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        this.activeKey,
+        encryptedData
+      );
+
+      const decoder = new TextDecoder();
+      return decoder.decode(decryptedBuffer);
+    } catch (err) {
+      return payloadStr; // Return raw if plain or failed
+    }
+  },
+
+  /* --- VAULT BLOCK RENDERING --- */
+  async renderVaultBlocks() {
+    const pages = await DB.getPages();
+    this.vaultPage = pages.find(p => p.type === 'vault');
+    if (!this.vaultPage) return;
+
+    const container = document.getElementById('vault-blocks-container');
+    if (!container) return;
+
+    const encryptedBlocks = await DB.getBlocks(this.vaultPage.id);
+    container.innerHTML = '';
+
+    if (encryptedBlocks.length === 0) {
+      container.innerHTML = `
+        <div class="placeholder-box" style="min-height: 160px; margin-top: 12px;" onclick="VaultEngine.addVaultBlock()">
+          ${getIconSVG('plus', '#d48b9a', 28)}
+          <p style="font-size: 13px;">Tap + to add your first encrypted vault block</p>
+        </div>
+      `;
+      return;
+    }
+
+    for (const block of encryptedBlocks) {
+      // Decrypt in-memory for display
+      const plainContent = await this.decryptPayload(block.content);
+      const displayBlock = { ...block, content: plainContent };
+
+      const elem = await BlockEngine.renderBlockElement(displayBlock);
+      container.appendChild(elem);
+    }
+  },
+
+  async addVaultBlock() {
+    if (!this.vaultPage) return;
+
+    const newBlock = {
+      id: generateId(),
+      pageId: this.vaultPage.id,
+      parentId: null,
+      type: 'text',
+      content: await this.encryptPayload('Encrypted secret entry...'),
+      order: Date.now(),
+      meta: {},
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    await DB.saveBlock(newBlock);
+    await this.renderVaultBlocks();
+    showToast('Vault block added');
+  }
+};
+
+// Auto-encrypt content before saving if saving a vault block
+const _originalSaveBlock = DB.saveBlock.bind(DB);
+DB.saveBlock = async function(block) {
+  const pages = await DB.getPages();
+  const page = pages.find(p => p.id === block.pageId);
+  if (page && page.type === 'vault' && VaultEngine.activeKey) {
+    // Encrypt before saving
+    if (typeof block.content === 'string' && !block.content.includes('"isEncrypted":true')) {
+      block.content = await VaultEngine.encryptPayload(block.content);
+    }
+  }
+  return _originalSaveBlock(block);
+};
+
+// Initialize Vault Engine
+document.addEventListener('DOMContentLoaded', () => {
+  VaultEngine.init();
+});
+
+    // === JS-11: Backup & Restore Handler ===
+/* ==========================================
+   BACKUP & RESTORE ENGINE (JSON EXPORTER/IMPORTER)
+   ========================================== */
+const BackupEngine = {
+  async init() {
+    await this.updateLastBackupBadge();
+  },
+
+  openBackupSheet() {
+    this.updateLastBackupBadge();
+    PagesController.openSheet('sheet-backup-restore');
+  },
+
+  async updateLastBackupBadge() {
+    const badge = document.getElementById('last-backup-date-badge');
+    if (!badge) return;
+
+    const lastBackup = await DB.getSetting('lastBackupDate');
+    if (lastBackup) {
+      const dateObj = new Date(lastBackup);
+      badge.textContent = `Last backup: ${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      badge.textContent = 'Last backup: Never';
+    }
+  },
+
+  async exportBackup() {
+    try {
+      showToast('Exporting backup...');
+
+      const pages = await DB.getPages();
+      const blocks = await DB.tx('blocks', 'readonly', store => store.getAll());
+      const settings = await DB.tx('settings', 'readonly', store => store.getAll());
+
+      const backupData = {
+        app: 'Orbit',
+        version: '2.0',
+        exportedAt: new Date().toISOString(),
+        pages: pages,
+        blocks: blocks,
+        settings: settings
+      };
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const filename = `orbit_backup_${todayStr}.json`;
+
+      // Trigger download
+      this.downloadJSON(backupData, filename);
+
+      // Record backup timestamp
+      const nowIso = new Date().toISOString();
+      await DB.saveSetting('lastBackupDate', nowIso);
+      await this.updateLastBackupBadge();
+
+      showToast('Backup exported successfully');
+      PagesController.closeAllSheets();
+    } catch (err) {
+      console.error('Export Backup Error:', err);
+      showToast('Failed to export backup');
+    }
+  },
+
+  downloadJSON(dataObj, filename) {
+    const jsonStr = JSON.stringify(dataObj, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+
+  handleRestoreFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const payload = JSON.parse(e.target.result);
+        if (!payload.pages || !payload.blocks) {
+          showToast('Invalid backup file structure');
+          return;
+        }
+
+        if (confirm('Restoring will overwrite all current app pages and blocks. Are you sure you want to proceed?')) {
+          await this.restoreData(payload);
+        }
+      } catch (err) {
+        console.error('Restore Error:', err);
+        showToast('Invalid JSON backup file');
+      }
+    };
+    reader.readAsText(file);
+  },
+
+  async restoreData(payload) {
+    try {
+      showToast('Restoring data...');
+
+      // Clear existing IndexedDB stores
+      await DB.tx('pages', 'readwrite', store => store.clear());
+      await DB.tx('blocks', 'readwrite', store => store.clear());
+      await DB.tx('settings', 'readwrite', store => store.clear());
+
+      // Write imported records
+      if (Array.isArray(payload.pages)) {
+        for (const page of payload.pages) {
+          await DB.savePage(page);
+        }
+      }
+
+      if (Array.isArray(payload.blocks)) {
+        await DB.saveBlocks(payload.blocks);
+      }
+
+      if (Array.isArray(payload.settings)) {
+        for (const setting of payload.settings) {
+          await DB.saveSetting(setting.key, setting.value);
+        }
+      }
+
+      showToast('Data restored successfully!');
+      PagesController.closeAllSheets();
+
+      // Refresh app views
+      await PagesController.renderPages();
+      await FeedEngine.loadFeed();
+      ScreenManager.push('screen-home');
+    } catch (err) {
+      console.error('Data Restore Error:', err);
+      showToast('Error restoring data');
+    }
+  }
+};
+
+// Add Backup & Restore trigger in Pages top bar
+document.addEventListener('DOMContentLoaded', () => {
+  BackupEngine.init();
+});
+
+    // === JS-12: Service Worker & PWA Handler ===
+/* ==========================================
+   PWA MANIFEST & SERVICE WORKER ENGINE
+   ========================================== */
+const PWAEngine = {
+  deferredPrompt: null,
+
+  init() {
+    this.injectManifest();
+    this.registerServiceWorker();
+    this.bindInstallPrompt();
+  },
+
+  injectManifest() {
+    const manifestData = {
+      name: "Orbit",
+      short_name: "Orbit",
+      description: "Your private social feed. Structured knowledge base. Encrypted vault.",
+      start_url: "./",
+      display: "standalone",
+      background_color: "#0d0d0f",
+      theme_color: "#0d0d0f",
+      orientation: "portrait",
+      icons: [
+        {
+          src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%230d0d0f'><rect width='512' height='512' rx='100' fill='%230d0d0f'/><circle cx='256' cy='256' r='120' stroke='%23a78bfa' stroke-width='32' fill='none'/><circle cx='256' cy='256' r='40' fill='%23a78bfa'/></svg>",
+          sizes: "512x512",
+          type: "image/svg+xml",
+          purpose: "any maskable"
+        }
+      ]
+    };
+
+    const stringManifest = JSON.stringify(manifestData);
+    const blob = new Blob([stringManifest], { type: 'application/json' });
+    const manifestUrl = URL.createObjectURL(blob);
+
+    let link = document.querySelector('link[rel="manifest"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'manifest';
+      document.head.appendChild(link);
+    }
+    link.href = manifestUrl;
+  },
+
+  registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        const CACHE_NAME = 'orbit-pwa-v2';
+        self.addEventListener('install', (e) => {
+          self.skipWaiting();
+        });
+        self.addEventListener('activate', (e) => {
+          e.waitUntil(clients.claim());
+        });
+        self.addEventListener('fetch', (e) => {
+          e.respondWith(
+            caches.match(e.request).then((res) => {
+              return res || fetch(e.request).catch(() => caches.match('./'));
+            })
+          );
+        });
+      `;
+
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+
+      navigator.serviceWorker.register(swUrl)
+        .then(() => console.log('Orbit Service Worker registered'))
+        .catch(err => console.log('Service Worker setup note:', err));
+    }
+  },
+
+  bindInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.style.display = 'flex';
+    });
+  },
+
+  async installPWA() {
+    if (!this.deferredPrompt) return;
+    this.deferredPrompt.prompt();
+    const { outcome } = await this.deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.style.display = 'none';
+    }
+    this.deferredPrompt = null;
+  }
+};
+
+// Initialize PWA Engine
+document.addEventListener('DOMContentLoaded', () => {
+  PWAEngine.init();
+});
+
+    // === JS-13: Layer 2 Blocks & Templates Engine ===
+/* ==========================================
+   LAYER 2 BLOCKS & LAYER 3 TEMPLATES ENGINE
+   ========================================== */
+
+// Append Layer 2 & 3 Block Types to BLOCK_TYPES menu
+BLOCK_TYPES.push(
+  { type: 'toggle', name: 'Toggle Section', icon: 'arrow-left' },
+  { type: 'table', name: 'Table Grid', icon: 'grid' },
+  { type: 'smart-link', name: 'Smart Link Card', icon: 'link' },
+  { type: 'log-entry', name: 'Log Entry Card', icon: 'star' },
+  { type: 'quote-template', name: 'Quote Card', icon: 'feather' }
+);
+
+const Layer2And3Engine = {
+  activeSmartBlockId: null,
+
+  async renderSpecialBlock(block) {
+    const contentArea = document.createElement('div');
+    contentArea.className = 'block-content-area';
+
+    switch (block.type) {
+      case 'toggle': {
+        const isCollapsed = block.meta && block.meta.collapsed;
+        const container = document.createElement('div');
+        container.className = `block-toggle ${isCollapsed ? 'collapsed' : ''}`;
+
+        const header = document.createElement('div');
+        header.className = 'toggle-header';
+
+        const arrow = document.createElement('div');
+        arrow.className = 'toggle-arrow';
+        arrow.innerHTML = getIconSVG('arrow-left', '#a78bfa', 16);
+        arrow.onclick = async () => {
+          block.meta = block.meta || {};
+          block.meta.collapsed = !block.meta.collapsed;
+          await DB.saveBlock(block);
+          BlockEngine.loadBlocks(block.pageId);
+        };
+
+        header.appendChild(arrow);
+        header.appendChild(BlockEngine.createEditableText(block, 'block-text'));
+
+        const body = document.createElement('div');
+        body.className = 'toggle-body';
+        body.innerHTML = `<div class="block-text rich-editable" contenteditable="true" spellcheck="false" data-placeholder="Toggle details...">${block.meta.bodyContent || ''}</div>`;
+
+        const bodyEditable = body.querySelector('.rich-editable');
+        let saveTimeout = null;
+        bodyEditable.oninput = () => {
+          clearTimeout(saveTimeout);
+          saveTimeout = setTimeout(async () => {
+            block.meta = block.meta || {};
+            block.meta.bodyContent = bodyEditable.innerHTML;
+            await DB.saveBlock(block);
+          }, 400);
+        };
+
+        container.appendChild(header);
+        container.appendChild(body);
+        contentArea.appendChild(container);
+        return contentArea;
+      }
+
+      case 'table': {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'block-table-wrapper';
+
+        const tableData = (block.meta && block.meta.tableData) || [
+          ['Header 1', 'Header 2'],
+          ['Cell 1', 'Cell 2']
+        ];
+
+        const table = document.createElement('table');
+        table.className = 'block-table';
+
+        tableData.forEach((row, rIdx) => {
+          const tr = document.createElement('tr');
+          row.forEach((cell, cIdx) => {
+            const td = document.createElement('td');
+            td.contentEditable = "true";
+            td.spellcheck = false;
+            td.innerHTML = cell;
+
+            td.oninput = () => {
+              tableData[rIdx][cIdx] = td.innerHTML;
+              block.meta = block.meta || {};
+              block.meta.tableData = tableData;
+              DB.saveBlock(block);
+            };
+
+            tr.appendChild(td);
+          });
+          table.appendChild(tr);
+        });
+
+        wrapper.appendChild(table);
+        contentArea.appendChild(wrapper);
+        return contentArea;
+      }
+
+      case 'smart-link': {
+        const card = document.createElement('div');
+        card.className = 'block-smart-link-card';
+        const url = (block.meta && block.meta.url) || '#';
+        let domain = 'Bookmark Link';
+        try {
+          domain = new URL(url).hostname;
+        } catch (e) {}
+
+        card.innerHTML = `
+          ${getIconSVG('link', '#7ba7d4', 20)}
+          <div>
+            <div class="smart-link-title">${block.content || url}</div>
+            <div class="smart-link-domain">${domain}</div>
+          </div>
+        `;
+
+        card.onclick = () => {
+          if (url && url !== '#') window.open(url, '_blank');
+        };
+
+        contentArea.appendChild(card);
+        return contentArea;
+      }
+
+      case 'log-entry': {
+        const card = document.createElement('div');
+        card.className = 'block-log-card';
+
+        const rating = (block.meta && block.meta.rating) || 5;
+        const tag = (block.meta && block.meta.tag) || 'Book Log';
+
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          starsHtml += `<span onclick="Layer2And3Engine.updateLogRating('${block.id}', ${i})">${i <= rating ? '★' : '☆'}</span>`;
+        }
+
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="log-tag">${tag}</span>
+            <div class="rating-stars">${starsHtml}</div>
+          </div>
+        `;
+
+        card.appendChild(BlockEngine.createEditableText(block, 'block-h2'));
+        contentArea.appendChild(card);
+        return contentArea;
+      }
+
+      case 'quote-template': {
+        const card = document.createElement('div');
+        card.className = 'block-quote-card';
+        card.appendChild(BlockEngine.createEditableText(block, 'block-text'));
+
+        const authorElem = document.createElement('div');
+        authorElem.className = 'quote-author rich-editable';
+        authorElem.contentEditable = "true";
+        authorElem.spellcheck = false;
+        authorElem.innerHTML = (block.meta && block.meta.author) || '— Author Name';
+
+        authorElem.oninput = () => {
+          block.meta = block.meta || {};
+          block.meta.author = authorElem.innerHTML;
+          DB.saveBlock(block);
+        };
+
+        card.appendChild(authorElem);
+        contentArea.appendChild(card);
+        return contentArea;
+      }
+
+      default:
+        return null;
+    }
+  },
+
+  async updateLogRating(blockId, rating) {
+    const block = BlockEngine.activeBlocks.find(b => b.id === blockId);
+    if (block) {
+      block.meta = block.meta || {};
+      block.meta.rating = rating;
+      await DB.saveBlock(block);
+      BlockEngine.loadBlocks(block.pageId);
+    }
+  },
+
+  openSmartLinkDialog(blockId) {
+    this.activeSmartBlockId = blockId;
+    document.getElementById('smart-link-url-input').value = '';
+    PagesController.openSheet('sheet-smart-link-input');
+  },
+
+  async saveSmartLinkBlock() {
+    const url = document.getElementById('smart-link-url-input').value.trim();
+    if (!url || !this.activeSmartBlockId) return;
+
+    const block = BlockEngine.activeBlocks.find(b => b.id === this.activeSmartBlockId);
+    if (block) {
+      let domain = url;
+      try { domain = new URL(url).hostname; } catch (e) {}
+      block.content = domain;
+      block.meta = { url: url };
+      await DB.saveBlock(block);
+      PagesController.closeAllSheets();
+      BlockEngine.loadBlocks(block.pageId);
+    }
+  }
+};
+
+// Hook BlockEngine.renderBlockElement for Layer 2 & Layer 3 blocks
+const _baseRenderBlockElement = BlockEngine.renderBlockElement.bind(BlockEngine);
+BlockEngine.renderBlockElement = async function(block) {
+  if (['toggle', 'table', 'smart-link', 'log-entry', 'quote-template'].includes(block.type)) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'block-wrapper';
+    wrapper.dataset.id = block.id;
+
+    // Add Drag Handle & Actions Trigger
+    const handle = document.createElement('div');
+    handle.className = 'drag-handle';
+    handle.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>`;
+
+    const triggerBtn = document.createElement('button');
+    triggerBtn.className = 'block-actions-trigger';
+    triggerBtn.innerHTML = getIconSVG('more-vertical', '#7b7b8f', 16);
+    triggerBtn.onclick = () => BlockEngine.openBlockOptions(block.id);
+
+    const specialContent = await Layer2And3Engine.renderSpecialBlock(block);
+
+    wrapper.appendChild(handle);
+    wrapper.appendChild(specialContent);
+    wrapper.appendChild(triggerBtn);
+
+    DragEngine.attach(handle, wrapper);
+
+    // If smart-link without URL set, trigger URL sheet
+    if (block.type === 'smart-link' && (!block.meta || !block.meta.url)) {
+      setTimeout(() => Layer2And3Engine.openSmartLinkDialog(block.id), 200);
+    }
+
+    return wrapper;
+  }
+
+  return _baseRenderBlockElement(block);
+};
+  </script>
+</body>
+</html>
